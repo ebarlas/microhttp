@@ -84,7 +84,7 @@ eventLoop.start();
 
 The example below demonstrates asynchronous request handling.
 Responses are handled in a separate background thread after
-a artificial one-second delay.
+an artificial one-second delay.
 
 ```java
 Response response = new Response(
