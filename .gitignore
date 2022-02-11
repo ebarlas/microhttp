@@ -1,0 +1,6 @@
+target/
+.idea/
+*.swp
+*.iml
+*.log
+tmp/
