@@ -12,7 +12,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.management.ManagementFactory;
 import java.net.Socket;
 import java.net.SocketException;
 import java.time.Duration;
@@ -25,7 +24,6 @@ import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class EventLoopTest {
 
@@ -213,8 +211,6 @@ public class EventLoopTest {
 
         @Override
         public synchronized void log(LogEntry... entries) {
-            long uptime = ManagementFactory.getRuntimeMXBean().getUptime();
-            System.out.println(Stream.of(entries).map(e -> e.key() + "=" + e.value()).collect(Collectors.joining(", ", "[" + uptime + "] ", "")));
             events.add(List.of(entries));
         }
 
