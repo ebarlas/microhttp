@@ -26,7 +26,7 @@ Principles:
 * Built atop non-blocking NIO
 * No TLS support
 * No streaming support
-* Network trace events
+* Traceability via log events
 
 Includes:
 * HTTP 1.0 and 1.1
