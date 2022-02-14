@@ -98,10 +98,10 @@ Response response = new Response(
         "OK",
         List.of(new Header("Content-Type", "text/plain")),
         "hello world\n".getBytes());
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        Handler handler = (req, callback) -> executorService.schedule(() -> callback.accept(response), 1, TimeUnit.SECONDS);
-        EventLoop eventLoop = new EventLoop(handler);
-        eventLoop.start();
+ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+Handler handler = (req, callback) -> executorService.schedule(() -> callback.accept(response), 1, TimeUnit.SECONDS);
+EventLoop eventLoop = new EventLoop(handler);
+eventLoop.start();
 ```
 
 ***
