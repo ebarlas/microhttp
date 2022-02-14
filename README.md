@@ -157,7 +157,7 @@ of throughput in an integrated system with many components and dependencies.
 
 [ThroughputServer.java](https://gist.github.com/ebarlas/d932bda5901c2907596cc53bd89c781a) was used for throughput tests.
 
-It simply returns "hello world" in a tiny, plain-text response to every request. Requests are handled in the contex of
+It simply returns "hello world" in a tiny, plain-text response to every request. Requests are handled in the context of
 the main application thread, directly within the `Handler.handle` method.  
 
 ### Apache Bench
