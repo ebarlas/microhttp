@@ -90,7 +90,7 @@ class RequestParser {
                 throw new IllegalStateException("multiple message lengths");
             }
             OptionalInt contentLength = findContentLength();
-            if (contentLength.isEmpty()) {
+            if (!contentLength.isPresent()) {
                 if (hasChunkedEncodingHeader()) {
                     state = State.CHUNK_SIZE;
                 } else {

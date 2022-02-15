@@ -2,6 +2,7 @@ package org.microhttp;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketOption;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -41,6 +42,8 @@ import java.util.Set;
  */
 public class EventLoop {
 
+    private static final String SO_REUSEPORT = "SO_REUSEPORT";
+
     private final Options options;
     private final Logger logger;
     private final Handler handler;
@@ -77,7 +80,12 @@ public class EventLoop {
 
         serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.setOption(StandardSocketOptions.SO_REUSEADDR, options.reuseAddr());
-        serverSocketChannel.setOption(StandardSocketOptions.SO_REUSEPORT, options.reusePort());
+        for (SocketOption<?> supportedOption : serverSocketChannel.supportedOptions()) {
+            if (supportedOption.name().equals(SO_REUSEPORT)) {
+                serverSocketChannel.setOption((SocketOption<? super Boolean>) supportedOption, options.reusePort());
+                break;
+            }
+        }
         serverSocketChannel.configureBlocking(false);
         serverSocketChannel.bind(address, options.acceptLength());
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);

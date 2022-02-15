@@ -60,7 +60,7 @@ class ByteTokenizer {
 
     private int indexOf(byte[] delimiter) {
         for (int i = position; i <= size - delimiter.length; i++) {
-            if (Arrays.equals(delimiter, 0, delimiter.length, array, i, i + delimiter.length)) {
+            if (Arrays.equals(delimiter, Arrays.copyOfRange(array, i, i + delimiter.length))) {
                 return i;
             }
         }
