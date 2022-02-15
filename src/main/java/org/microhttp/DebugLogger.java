@@ -1,4 +1,4 @@
-package microhttp;
+package org.microhttp;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;

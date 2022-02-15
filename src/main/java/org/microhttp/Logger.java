@@ -1,4 +1,4 @@
-package microhttp;
+package org.microhttp;
 
 /**
  * Simple logging abstraction that operates on {@link LogEntry} instances.

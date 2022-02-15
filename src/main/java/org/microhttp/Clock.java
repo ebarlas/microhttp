@@ -1,4 +1,4 @@
-package microhttp;
+package org.microhttp;
 
 /**
  * Simple clock abstraction that produces clock times suitable for calculating time deltas.

@@ -1,4 +1,4 @@
-package microhttp;
+package org.microhttp;
 
 class SystemClock implements Clock {
     @Override

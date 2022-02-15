@@ -1,4 +1,4 @@
-package microhttp;
+package org.microhttp;
 
 import java.util.ArrayList;
 import java.util.List;

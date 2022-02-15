@@ -1,4 +1,4 @@
-package microhttp;
+package org.microhttp;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;

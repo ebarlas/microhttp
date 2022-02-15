@@ -1,4 +1,4 @@
-package microhttp;
+package org.microhttp;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

@@ -1,4 +1,4 @@
-package microhttp;
+package org.microhttp;
 
 import java.time.Duration;
 import java.util.ArrayList;
