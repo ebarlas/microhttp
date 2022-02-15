@@ -93,6 +93,16 @@ public class RequestParserTest {
             "0\r\n" +
             "\r\n").getBytes();
 
+    // https://snyk.io/blog/demystifying-http-request-smuggling/
+    static final byte[] DOUBLE_CONTENT_LENGTH_SMUGGLE = ("GET /file HTTP/1.1\r\n" +
+            "Content-Length: 0\r\n" +
+            "Content-Length: 43\r\n" +
+            "Host: snyk.io\r\n" +
+            "\r\n" +
+            "GET /reqsmuggle HTTP/1.1\r\n" +
+            "Host: snyk.io\r\n" +
+            "\r\n").getBytes();
+
     static Stream<Arguments> requestArgsProvider() {
         return Stream.of(
                 Arguments.arguments(GET_BYTES, GET_REQUEST),
@@ -105,7 +115,8 @@ public class RequestParserTest {
                 Arguments.arguments(INVALID_REQUEST_LINE),
                 Arguments.arguments(INVALID_CONTENT_LENGTH),
                 Arguments.arguments(INVALID_HEADER),
-                Arguments.arguments(INVALID_CHUNK_SIZE));
+                Arguments.arguments(INVALID_CHUNK_SIZE),
+                Arguments.arguments(DOUBLE_CONTENT_LENGTH_SMUGGLE));
     }
 
     @ParameterizedTest

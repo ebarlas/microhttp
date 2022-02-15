@@ -86,6 +86,9 @@ class RequestParser {
 
     private void parseHeader(byte[] token) {
         if (token.length == 0) { // CR-LF on own line, end of headers
+            if (hasMultipleTransferLengths()) {
+                throw new IllegalStateException("multiple message lengths");
+            }
             OptionalInt contentLength = findContentLength();
             if (contentLength.isEmpty()) {
                 if (hasChunkedEncodingHeader()) {
@@ -145,6 +148,12 @@ class RequestParser {
             System.arraycopy(chunk, 0, body, offset, chunk.length);
             offset += chunk.length;
         }
+    }
+
+    private boolean hasMultipleTransferLengths() {
+        return headers.stream()
+                .filter(h -> h.name().equalsIgnoreCase(HEADER_CONTENT_LENGTH) || h.name().equalsIgnoreCase(HEADER_TRANSFER_ENCODING))
+                .count() > 1;
     }
 
     private OptionalInt findContentLength() {
