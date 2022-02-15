@@ -6,6 +6,8 @@ public class Options {
 
     private String host = "localhost";
     private int port = 8080;
+    private boolean reuseAddr = false;
+    private boolean reusePort = false;
     private Duration resolution = Duration.ofMillis(100);
     private Duration socketTimeout = Duration.ofSeconds(60);
     private int readBufferSize = 1_024 * 64;
@@ -18,6 +20,14 @@ public class Options {
 
     public int port() {
         return port;
+    }
+
+    public boolean reuseAddr() {
+        return reuseAddr;
+    }
+
+    public boolean reusePort() {
+        return reusePort;
     }
 
     public Duration resolution() {
@@ -47,6 +57,16 @@ public class Options {
 
     public Options withPort(int port) {
         this.port = port;
+        return this;
+    }
+
+    public Options withReuseAddr(boolean reuseAddr) {
+        this.reuseAddr = reuseAddr;
+        return this;
+    }
+
+    public Options withReusePort(boolean reusePort) {
+        this.reusePort = reusePort;
         return this;
     }
 

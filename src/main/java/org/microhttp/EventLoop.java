@@ -2,6 +2,7 @@ package org.microhttp;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
@@ -70,9 +71,15 @@ public class EventLoop {
         readBuffer = ByteBuffer.allocateDirect(options.readBufferSize());
         selector = Selector.open();
 
+        InetSocketAddress address = options.host() == null
+                ? new InetSocketAddress(options.port()) // wildcard address
+                : new InetSocketAddress(options.host(), options.port());
+
         serverSocketChannel = ServerSocketChannel.open();
+        serverSocketChannel.setOption(StandardSocketOptions.SO_REUSEADDR, options.reuseAddr());
+        serverSocketChannel.setOption(StandardSocketOptions.SO_REUSEPORT, options.reusePort());
         serverSocketChannel.configureBlocking(false);
-        serverSocketChannel.bind(new InetSocketAddress(options.host(), options.port()), options.acceptLength());
+        serverSocketChannel.bind(address, options.acceptLength());
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
     }
 
