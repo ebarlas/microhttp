@@ -40,6 +40,19 @@ Excludes:
 * Caching
 * Compression
 
+# Dependency
+
+Microhttp is available in the Maven Central repository with group `org.microhttp`
+and artifact `microhttp`.
+
+```xml
+<dependency>
+    <groupId>org.microhttp</groupId>
+    <artifactId>microhttp</artifactId>
+    <version>0.1</version>
+</dependency>
+```
+
 # Getting Started
 
 The snippet below represents a minimal starting point.
