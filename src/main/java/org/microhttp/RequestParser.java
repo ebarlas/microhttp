@@ -2,7 +2,6 @@ package org.microhttp;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -45,7 +44,7 @@ class RequestParser {
     private State state = State.REQUEST_LINE;
     private int contentLength;
     private int chunkSize;
-    private List<byte[]> chunks = new ArrayList<>();
+    private ByteMerger chunks = new ByteMerger();
 
     private String method;
     private String uri;
@@ -89,15 +88,15 @@ class RequestParser {
             if (hasMultipleTransferLengths()) {
                 throw new IllegalStateException("multiple message lengths");
             }
-            OptionalInt contentLength = findContentLength();
-            if (contentLength.isEmpty()) {
+            Integer contentLength = findContentLength();
+            if (contentLength == null) {
                 if (hasChunkedEncodingHeader()) {
                     state = State.CHUNK_SIZE;
                 } else {
                     state = State.DONE;
                 }
             } else {
-                this.contentLength = contentLength.getAsInt();
+                this.contentLength = contentLength;
                 state = State.BODY;
             }
         } else {
@@ -131,7 +130,7 @@ class RequestParser {
     }
 
     private void parseChunkTrailer() {
-        mergeChunks();
+        body = chunks.merge();
         state = State.DONE;
     }
 
@@ -140,39 +139,36 @@ class RequestParser {
         state = State.DONE;
     }
 
-    private void mergeChunks() {
-        int size = chunks.stream().mapToInt(a -> a.length).sum();
-        body = new byte[size];
-        int offset = 0;
-        for (byte[] chunk : chunks) {
-            System.arraycopy(chunk, 0, body, offset, chunk.length);
-            offset += chunk.length;
-        }
-    }
-
     private boolean hasMultipleTransferLengths() {
-        return headers.stream()
-                .filter(h -> h.name().equalsIgnoreCase(HEADER_CONTENT_LENGTH) || h.name().equalsIgnoreCase(HEADER_TRANSFER_ENCODING))
-                .count() > 1;
+        int count = 0;
+        for (Header header : headers) {
+            if (header.name().equalsIgnoreCase(HEADER_CONTENT_LENGTH) || header.name().equalsIgnoreCase(HEADER_TRANSFER_ENCODING)) {
+                count++;
+            }
+        }
+        return count > 1;
     }
 
-    private OptionalInt findContentLength() {
+    private Integer findContentLength() {
         try {
-            return headers.stream()
-                    .filter(h -> h.name().equalsIgnoreCase(HEADER_CONTENT_LENGTH))
-                    .map(Header::value)
-                    .mapToInt(Integer::parseInt)
-                    .findFirst();
+            for (Header header : headers) {
+                if (header.name().equalsIgnoreCase(HEADER_CONTENT_LENGTH)) {
+                    return Integer.parseInt(header.value());
+                }
+            }
+            return null;
         } catch (NumberFormatException e) {
             throw new IllegalStateException("invalid content-length header value");
         }
     }
 
     private boolean hasChunkedEncodingHeader() {
-        return headers.stream()
-                .filter(h -> h.name().equalsIgnoreCase(HEADER_TRANSFER_ENCODING))
-                .map(Header::value)
-                .anyMatch(v -> v.equalsIgnoreCase(CHUNKED));
+        for (Header header : headers) {
+            if (header.name().equalsIgnoreCase(HEADER_TRANSFER_ENCODING) && header.value().equalsIgnoreCase(CHUNKED)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

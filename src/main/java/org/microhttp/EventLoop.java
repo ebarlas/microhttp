@@ -87,6 +87,11 @@ public class EventLoop {
         static final String HTTP_1_0 = "HTTP/1.0";
         static final String HTTP_1_1 = "HTTP/1.1";
 
+        static final String HEADER_CONNECTION = "Connection";
+        static final String HEADER_CONTENT_LENGTH = "Content-Length";
+
+        static final String KEEP_ALIVE = "Keep-Alive";
+
         final SocketChannel socketChannel;
         final SelectionKey selectionKey;
         final ByteTokenizer byteTokenizer;
@@ -175,7 +180,7 @@ public class EventLoop {
             socketChannel.register(selector, 0, this);
             Request request = requestParser.request();
             httpOneDotZero = request.version().equalsIgnoreCase(HTTP_1_0);
-            keepAlive = request.hasHeader("Connection", "Keep-Alive");
+            keepAlive = request.hasHeader(HEADER_CONNECTION, KEEP_ALIVE);
             handler.handle(request, this::onResponse);
             byteTokenizer.compact();
             requestParser = new RequestParser(byteTokenizer);
@@ -204,10 +209,10 @@ public class EventLoop {
             String version = httpOneDotZero ? HTTP_1_0 : HTTP_1_1;
             List<Header> headers = new ArrayList<>();
             if (httpOneDotZero && keepAlive) {
-                headers.add(new Header("Connection", "Keep-Alive"));
+                headers.add(new Header(HEADER_CONNECTION, KEEP_ALIVE));
             }
-            if (response.body().length > 0 && !response.hasHeader("Content-Length")) {
-                headers.add(new Header("Content-Length", Integer.toString(response.body().length)));
+            if (response.body().length > 0 && !response.hasHeader(HEADER_CONTENT_LENGTH)) {
+                headers.add(new Header(HEADER_CONTENT_LENGTH, Integer.toString(response.body().length)));
             }
             writeBuffer = ByteBuffer.wrap(response.serialize(version, headers));
             socketChannel.register(selector, SelectionKey.OP_WRITE, this);

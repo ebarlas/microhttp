@@ -43,7 +43,7 @@ public class EventLoopConcurrencyTest {
             Response response = new Response(
                     200,
                     "OK",
-                    List.of(new Header("Content-Type", req.header("Content-Type").get())),
+                    List.of(new Header("Content-Type", req.header("Content-Type"))),
                     req.body());
             callback.accept(response);
         });
