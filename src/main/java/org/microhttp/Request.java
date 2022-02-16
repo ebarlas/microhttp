@@ -22,7 +22,12 @@ public record Request(
     }
 
     public boolean hasHeader(String name, String value) {
-        return value.equalsIgnoreCase(header(name));
+        for (Header header : headers) {
+            if (header.name().equalsIgnoreCase(name) && header.value().equalsIgnoreCase(value)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
