@@ -215,7 +215,7 @@ public class EventLoop {
             if (httpOneDotZero && keepAlive) {
                 headers.add(new Header(HEADER_CONNECTION, KEEP_ALIVE));
             }
-            if (response.body().length > 0 && !response.hasHeader(HEADER_CONTENT_LENGTH)) {
+            if (!response.hasHeader(HEADER_CONTENT_LENGTH)) {
                 headers.add(new Header(HEADER_CONTENT_LENGTH, Integer.toString(response.body().length)));
             }
             writeBuffer = ByteBuffer.wrap(response.serialize(version, headers));
