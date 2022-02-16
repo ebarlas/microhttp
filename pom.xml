@@ -40,6 +40,12 @@
         </repository>
     </distributionManagement>
 
+    <properties>
+        <encoding>UTF-8</encoding>
+        <project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
+        <project.resources.sourceEncoding>${encoding}</project.resources.sourceEncoding>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
