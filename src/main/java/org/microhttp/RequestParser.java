@@ -21,11 +21,11 @@ class RequestParser {
     private static final int RADIX_HEX = 16;
 
     enum State {
-        REQUEST_LINE(p -> p.tokenizer.next(CRLF), (rp, token) -> rp.parseRequestLine(token)),
-        HEADER(p -> p.tokenizer.next(CRLF), (rp, token) -> rp.parseHeader(token)),
-        BODY(p -> p.tokenizer.next(p.contentLength), (rp, token) -> rp.parseBody(token)),
-        CHUNK_SIZE(p -> p.tokenizer.next(CRLF), (rp, token) -> rp.parseChunkSize(token)),
-        CHUNK_DATA(p -> p.tokenizer.next(p.chunkSize), (rp, token) -> rp.parseChunkData(token)),
+        REQUEST_LINE(p -> p.tokenizer.next(CRLF), RequestParser::parseRequestLine),
+        HEADER(p -> p.tokenizer.next(CRLF), RequestParser::parseHeader),
+        BODY(p -> p.tokenizer.next(p.contentLength), RequestParser::parseBody),
+        CHUNK_SIZE(p -> p.tokenizer.next(CRLF), RequestParser::parseChunkSize),
+        CHUNK_DATA(p -> p.tokenizer.next(p.chunkSize), RequestParser::parseChunkData),
         CHUNK_DATA_END(p -> p.tokenizer.next(CRLF), (rp, token) -> rp.parseChunkDateEnd()),
         CHUNK_TRAILER(p -> p.tokenizer.next(CRLF), (rp, token) -> rp.parseChunkTrailer()),
         DONE(null, null);

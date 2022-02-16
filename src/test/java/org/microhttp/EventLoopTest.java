@@ -18,7 +18,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
@@ -39,34 +38,46 @@ public class EventLoopTest {
             List.of(new Header("Content-Type", "text/plain")),
             "hello world\n".getBytes());
 
-    static final String HTTP10_REQUEST = "GET /file HTTP/1.0\r\n" +
-            "\r\n";
+    static final String HTTP10_REQUEST = """
+            GET /file HTTP/1.0\r
+            \r
+            """;
 
-    static final String HTTP10_KEEP_ALIVE_REQUEST = "GET /file HTTP/1.0\r\n" +
-            "Connection: Keep-Alive\r\n" +
-            "\r\n";
+    static final String HTTP10_KEEP_ALIVE_REQUEST = """
+            GET /file HTTP/1.0\r
+            Connection: Keep-Alive\r
+            \r
+            """;
 
-    static final String HTTP10_KEEP_ALIVE_RESPONSE = "HTTP/1.0 200 OK\r\n" +
-            "Connection: Keep-Alive\r\n" +
-            "Content-Length: 12\r\n" +
-            "Content-Type: text/plain\r\n" +
-            "\r\n" +
-            "hello world\n";
+    static final String HTTP10_KEEP_ALIVE_RESPONSE = """
+            HTTP/1.0 200 OK\r
+            Connection: Keep-Alive\r
+            Content-Length: 12\r
+            Content-Type: text/plain\r
+            \r
+            hello world
+            """;
 
-    static final String HTTP10_RESPONSE = "HTTP/1.0 200 OK\r\n" +
-            "Content-Length: 12\r\n" +
-            "Content-Type: text/plain\r\n" +
-            "\r\n" +
-            "hello world\n";
+    static final String HTTP10_RESPONSE = """
+            HTTP/1.0 200 OK\r
+            Content-Length: 12\r
+            Content-Type: text/plain\r
+            \r
+            hello world
+            """;
 
-    static final String HTTP11_REQUEST = "GET /file HTTP/1.1\r\n" +
-            "\r\n";
+    static final String HTTP11_REQUEST = """
+            GET /file HTTP/1.1\r
+            \r
+            """;
 
-    static final String HTTP11_RESPONSE = "HTTP/1.1 200 OK\r\n" +
-            "Content-Length: 12\r\n" +
-            "Content-Type: text/plain\r\n" +
-            "\r\n" +
-            "hello world\n";
+    static final String HTTP11_RESPONSE = """
+            HTTP/1.1 200 OK\r
+            Content-Length: 12\r
+            Content-Type: text/plain\r
+            \r
+            hello world
+            """;
 
     Socket socket;
     InputStream inputStream;
@@ -168,7 +179,12 @@ public class EventLoopTest {
         int length = 3_072;
         char[] arr = new char[length];
         Arrays.fill(arr, 'x');
-        String request = "POST /file HTTP/1.0\r\nContent-Length: %d\r\n\r\n%s".formatted(length, new String(arr));
+        String request = """
+                POST /file HTTP/1.0\r
+                Content-Length: %d\r
+                \r
+                %s
+                """.formatted(length, new String(arr));
         outputStream.write(request.getBytes());
         try {
             // read processed prior to receipt of RST packet
