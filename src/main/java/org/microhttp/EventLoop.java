@@ -83,6 +83,10 @@ public class EventLoop {
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
     }
 
+    public int getPort() throws IOException {
+        return serverSocketChannel.getLocalAddress() instanceof InetSocketAddress a ? a.getPort() : -1;
+    }
+
     private class Connection {
         static final String HTTP_1_0 = "HTTP/1.0";
         static final String HTTP_1_1 = "HTTP/1.1";

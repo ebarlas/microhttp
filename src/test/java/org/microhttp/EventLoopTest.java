@@ -74,11 +74,10 @@ public class EventLoopTest {
 
     @BeforeAll
     static void beforeAll() throws IOException {
-        port = 16_000 + new Random().nextInt(1_000);
         logger = new TestLogger();
         executor = Executors.newFixedThreadPool(1);
         Options options = new Options()
-                .withPort(port)
+                .withPort(0)
                 .withSocketTimeout(Duration.ofMillis(2_500))
                 .withReadBufferSize(1_024)
                 .withMaxRequestSize(2_048);
@@ -86,6 +85,7 @@ public class EventLoopTest {
                 options,
                 logger,
                 (req, callback) -> executor.execute(() -> callback.accept(RESPONSE)));
+        port = eventLoop.getPort();
         eventLoopThread = new Thread(() -> {
             try {
                 eventLoop.start();
