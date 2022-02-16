@@ -11,10 +11,12 @@ import java.util.stream.Stream;
 
 public class RequestParserTest {
 
-    static final byte[] GET_BYTES = ("GET /file HTTP/1.1\r\n" +
-            "Host: 127.0.0.1:9000\r\n" +
-            "Accept: */*\r\n" +
-            "\r\n").getBytes();
+    static final byte[] GET_BYTES = """
+            GET /file HTTP/1.1\r
+            Host: 127.0.0.1:9000\r
+            Accept: */*\r
+            \r
+            """.getBytes();
 
     static final Request GET_REQUEST = new Request(
             "GET",
@@ -25,13 +27,14 @@ public class RequestParserTest {
                     new Header("Accept", "*/*")),
             null);
 
-    static final byte[] POST_BYTES = ("POST /file HTTP/1.1\r\n" +
-            "Host: 127.0.0.1:9000\r\n" +
-            "Accept: */*\r\n" +
-            "Content-Length: 11\r\n" +
-            "Content-Type: text/plain\r\n" +
-            "\r\n" +
-            "hello world").getBytes();
+    static final byte[] POST_BYTES = """
+            POST /file HTTP/1.1\r
+            Host: 127.0.0.1:9000\r
+            Accept: */*\r
+            Content-Length: 11\r
+            Content-Type: text/plain\r
+            \r
+            hello world""".getBytes();
 
     static final Request POST_REQUEST = new Request(
             "POST",
@@ -44,20 +47,22 @@ public class RequestParserTest {
                     new Header("Content-Type", "text/plain")),
             "hello world".getBytes());
 
-    static final byte[] CHUNKED_POST_BYTES = ("POST /file HTTP/1.1\r\n" +
-            "Host: 127.0.0.1:9000\r\n" +
-            "Accept: */*\r\n" +
-            "Transfer-Encoding: chunked\r\n" +
-            "Content-Type: text/plain\r\n" +
-            "\r\n" +
-            "5\r\n" +
-            "hello\r\n" +
-            "1\r\n" +
-            " \r\n" +
-            "5\r\n" +
-            "world\r\n" +
-            "0\r\n" +
-            "\r\n").getBytes();
+    static final byte[] CHUNKED_POST_BYTES = """
+            POST /file HTTP/1.1\r
+            Host: 127.0.0.1:9000\r
+            Accept: */*\r
+            Transfer-Encoding: chunked\r
+            Content-Type: text/plain\r
+            \r
+            5\r
+            hello\r
+            1\r
+             \r
+            5\r
+            world\r
+            0\r
+            \r
+            """.getBytes();
 
     static final Request CHUNKED_POST_REQUEST = new Request(
             "POST",
@@ -70,38 +75,47 @@ public class RequestParserTest {
                     new Header("Content-Type", "text/plain")),
             "hello world".getBytes());
 
-    static final byte[] INVALID_CONTENT_LENGTH = ("POST /file HTTP/1.1\r\n" +
-            "Content-Length: abc\r\n" +
-            "\r\n" +
-            "hello world").getBytes();
+    static final byte[] INVALID_CONTENT_LENGTH = """
+            POST /file HTTP/1.1\r
+            Content-Length: abc\r
+            \r
+            hello world""".getBytes();
 
-    static final byte[] INVALID_REQUEST_LINE = ("GET /file\r\n" +
-            "\r\n").getBytes();
+    static final byte[] INVALID_REQUEST_LINE = """
+            GET /file\r
+            \r
+            """.getBytes();
 
-    static final byte[] INVALID_HEADER = ("GET /file HTTP/1.1\r\n" +
-            "abc123\r\n" +
-            "\r\n").getBytes();
+    static final byte[] INVALID_HEADER = """
+            GET /file HTTP/1.1\r
+            abc123\r
+            \r
+            """.getBytes();
 
-    static final byte[] INVALID_CHUNK_SIZE = ("POST /file HTTP/1.1\r\n" +
-            "Host: 127.0.0.1:9000\r\n" +
-            "Accept: */*\r\n" +
-            "Transfer-Encoding: chunked\r\n" +
-            "Content-Type: text/plain\r\n" +
-            "\r\n" +
-            "$\r\n" +
-            "hello\r\n" +
-            "0\r\n" +
-            "\r\n").getBytes();
+    static final byte[] INVALID_CHUNK_SIZE = """
+            POST /file HTTP/1.1\r
+            Host: 127.0.0.1:9000\r
+            Accept: */*\r
+            Transfer-Encoding: chunked\r
+            Content-Type: text/plain\r
+            \r
+            $\r
+            hello\r
+            0\r
+            \r
+            """.getBytes();
 
     // https://snyk.io/blog/demystifying-http-request-smuggling/
-    static final byte[] DOUBLE_CONTENT_LENGTH_SMUGGLE = ("GET /file HTTP/1.1\r\n" +
-            "Content-Length: 0\r\n" +
-            "Content-Length: 43\r\n" +
-            "Host: snyk.io\r\n" +
-            "\r\n" +
-            "GET /reqsmuggle HTTP/1.1\r\n" +
-            "Host: snyk.io\r\n" +
-            "\r\n").getBytes();
+    static final byte[] DOUBLE_CONTENT_LENGTH_SMUGGLE = """
+            GET /file HTTP/1.1\r
+            Content-Length: 0\r
+            Content-Length: 43\r
+            Host: snyk.io\r
+            \r
+            GET /reqsmuggle HTTP/1.1\r
+            Host: snyk.io\r
+            \r
+            """.getBytes();
 
     static Stream<Arguments> requestArgsProvider() {
         return Stream.of(
