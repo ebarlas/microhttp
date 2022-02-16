@@ -84,8 +84,8 @@ public class EventLoop {
         final SelectionKey selectionKey;
         final ByteTokenizer byteTokenizer;
         final String id;
+        final ByteBuffer writeBuffer;
         RequestParser requestParser;
-        ByteBuffer writeBuffer;
         ScheduledTask socketTimeoutTask;
         boolean httpOneDotZero;
         boolean keepAlive;
@@ -97,6 +97,7 @@ public class EventLoop {
             id = Long.toString(connectionCounter++);
             requestParser = new RequestParser(byteTokenizer);
             socketTimeoutTask = scheduler.schedule(this::onSocketTimeout, options.socketTimeout());
+            writeBuffer = ByteBuffer.allocate(options.writeBufferSize());
         }
 
         private void onSocketTimeout() {
@@ -202,7 +203,9 @@ public class EventLoop {
             if (response.body().length > 0 && !response.hasHeader("Content-Length")) {
                 headers.add(new Header("Content-Length", Integer.toString(response.body().length)));
             }
-            writeBuffer = ByteBuffer.wrap(response.serialize(version, headers));
+            writeBuffer.clear();
+            response.serialize(version, headers, writeBuffer);
+            writeBuffer.flip();
             socketChannel.register(selector, SelectionKey.OP_WRITE, this);
             if (logger.enabled()) {
                 logger.log(
@@ -251,7 +254,7 @@ public class EventLoop {
                         }
                         onParseRequest();
                     } else { // switch back to read mode
-                        writeBuffer = null;
+                        writeBuffer.clear();
                         socketChannel.register(selector, SelectionKey.OP_READ, this);
                     }
                 }

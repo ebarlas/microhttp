@@ -9,6 +9,7 @@ public class Options {
     private Duration resolution = Duration.ofMillis(100);
     private Duration socketTimeout = Duration.ofSeconds(60);
     private int readBufferSize = 1_024 * 64;
+    private int writeBufferSize = 1_024 * 64;
     private int acceptLength = 0;
     private int maxRequestSize = 1_024 * 1_024;
 
@@ -30,6 +31,10 @@ public class Options {
 
     public int readBufferSize() {
         return readBufferSize;
+    }
+
+    public int writeBufferSize() {
+        return writeBufferSize;
     }
 
     public int acceptLength() {
@@ -62,6 +67,11 @@ public class Options {
 
     public Options withReadBufferSize(int readBufferSize) {
         this.readBufferSize = readBufferSize;
+        return this;
+    }
+
+    public Options withWriteBufferSize(int writeBufferSize) {
+        this.writeBufferSize = writeBufferSize;
         return this;
     }
 

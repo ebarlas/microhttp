@@ -1,6 +1,6 @@
 package microhttp;
 
-import java.util.ArrayList;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 public record Response(
@@ -17,36 +17,23 @@ public record Response(
     static final byte[] SPACE = " ".getBytes();
     static final byte[] CRLF = "\r\n".getBytes();
 
-    byte[] serialize(String version, List<Header> headers) {
-        List<byte[]> segments = new ArrayList<>();
-        segments.add(version.getBytes());
-        segments.add(SPACE);
-        segments.add(Integer.toString(status).getBytes());
-        segments.add(SPACE);
-        segments.add(reason.getBytes());
-        segments.add(CRLF);
+    void serialize(String version, List<Header> headers, ByteBuffer writeBuffer) {
+        writeBuffer.put(version.getBytes());
+        writeBuffer.put(SPACE);
+        writeBuffer.put(Integer.toString(status).getBytes());
+        writeBuffer.put(SPACE);
+        writeBuffer.put(reason.getBytes());
+        writeBuffer.put(CRLF);
         for (List<Header> list : List.of(headers, this.headers)) {
             for (Header header : list) {
-                segments.add(header.name().getBytes());
-                segments.add(COLON_SPACE);
-                segments.add(header.value().getBytes());
-                segments.add(CRLF);
+                writeBuffer.put(header.name().getBytes());
+                writeBuffer.put(COLON_SPACE);
+                writeBuffer.put(header.value().getBytes());
+                writeBuffer.put(CRLF);
             }
         }
-        segments.add(CRLF);
-        segments.add(body);
-        return merge(segments);
-    }
-
-    private static byte[] merge(List<byte[]> segments) {
-        int size = segments.stream().mapToInt(a -> a.length).sum();
-        byte[] result = new byte[size];
-        int offset = 0;
-        for (byte[] segment : segments) {
-            System.arraycopy(segment, 0, result, offset, segment.length);
-            offset += segment.length;
-        }
-        return result;
+        writeBuffer.put(CRLF);
+        writeBuffer.put(body);
     }
 
 }
