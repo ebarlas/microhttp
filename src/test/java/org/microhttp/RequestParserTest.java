@@ -124,13 +124,13 @@ public class RequestParserTest {
                 Arguments.arguments(CHUNKED_POST_BYTES, CHUNKED_POST_REQUEST));
     }
 
-    static Stream<Arguments> invalidRequestArgsProvider() {
+    static Stream<byte[]> invalidRequestArgsProvider() {
         return Stream.of(
-                Arguments.arguments(INVALID_REQUEST_LINE),
-                Arguments.arguments(INVALID_CONTENT_LENGTH),
-                Arguments.arguments(INVALID_HEADER),
-                Arguments.arguments(INVALID_CHUNK_SIZE),
-                Arguments.arguments(DOUBLE_CONTENT_LENGTH_SMUGGLE));
+                INVALID_REQUEST_LINE,
+                INVALID_CONTENT_LENGTH,
+                INVALID_HEADER,
+                INVALID_CHUNK_SIZE,
+                DOUBLE_CONTENT_LENGTH_SMUGGLE);
     }
 
     @ParameterizedTest
