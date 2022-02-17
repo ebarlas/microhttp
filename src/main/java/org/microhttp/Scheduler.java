@@ -30,6 +30,10 @@ class Scheduler {
         this.tasks = new TreeSet<>(Comparator.comparing((Task t) -> t.time).thenComparing(t -> t.id));
     }
 
+    synchronized int size() {
+        return tasks.size();
+    }
+
     synchronized void execute(Runnable task) {
         schedule(task, Duration.ZERO);
     }
