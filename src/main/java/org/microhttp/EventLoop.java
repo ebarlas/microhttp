@@ -185,12 +185,13 @@ public class EventLoop {
             Request request = requestParser.request();
             httpOneDotZero = request.version().equalsIgnoreCase(HTTP_1_0);
             keepAlive = request.hasHeader(HEADER_CONNECTION, KEEP_ALIVE);
-            handler.handle(request, this::onResponse);
+            Thread eventLoopThread = Thread.currentThread();
+            handler.handle(request, res -> onResponse(res, eventLoopThread));
             byteTokenizer.compact();
             requestParser = new RequestParser(byteTokenizer);
         }
 
-        private void onResponse(Response response) {
+        private void onResponse(Response response, Thread eventLoopThread) {
             // enqueuing the callback invocation and waking the selector
             // ensures that the response callback works properly when
             // invoked inline from the event loop thread or a separate background thread
@@ -206,7 +207,11 @@ public class EventLoop {
                     failSafeClose();
                 }
             });
-            selector.wakeup();
+            // selector wakeup is not necessary if callback was invoked within event loop thread
+            // since scheduler tasks are processed at the end of every event loop iteration
+            if (Thread.currentThread() != eventLoopThread) {
+                selector.wakeup();
+            }
         }
 
         private void prepareToWriteResponse(Response response) throws ClosedChannelException {
