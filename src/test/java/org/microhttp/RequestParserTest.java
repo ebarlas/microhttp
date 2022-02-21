@@ -81,14 +81,21 @@ public class RequestParserTest {
             \r
             hello world""".getBytes();
 
-    static final byte[] INVALID_REQUEST_LINE = """
-            GET /file\r
-            \r
-            """.getBytes();
-
     static final byte[] INVALID_HEADER = """
             GET /file HTTP/1.1\r
             abc123\r
+            \r
+            """.getBytes();
+
+    static final byte[] INVALID_HEADER_NAME = """
+            GET /file HTTP/1.1\r
+            : Value\r
+            \r
+            """.getBytes();
+
+    static final byte[] INVALID_HEADER_VALUE = """
+            GET /file HTTP/1.1\r
+            Name: \r
             \r
             """.getBytes();
 
@@ -126,9 +133,10 @@ public class RequestParserTest {
 
     static Stream<byte[]> invalidRequestArgsProvider() {
         return Stream.of(
-                INVALID_REQUEST_LINE,
                 INVALID_CONTENT_LENGTH,
                 INVALID_HEADER,
+                INVALID_HEADER_NAME,
+                INVALID_HEADER_VALUE,
                 INVALID_CHUNK_SIZE,
                 DOUBLE_CONTENT_LENGTH_SMUGGLE);
     }

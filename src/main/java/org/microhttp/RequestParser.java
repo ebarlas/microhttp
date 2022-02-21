@@ -4,15 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 class RequestParser {
 
-    private static final Pattern REQUEST_LINE = Pattern.compile("([^ ]+) ([^ ]+) (.+)");
-    private static final Pattern HEADER_LINE = Pattern.compile("([^:]+):[ ]*(.+)");
-
     private static final byte[] CRLF = "\r\n".getBytes();
+    private static final byte[] SPACE = " ".getBytes();
 
     private static final String HEADER_CONTENT_LENGTH = "Content-Length";
     private static final String HEADER_TRANSFER_ENCODING = "Transfer-Encoding";
@@ -21,7 +17,9 @@ class RequestParser {
     private static final int RADIX_HEX = 16;
 
     enum State {
-        REQUEST_LINE(p -> p.tokenizer.next(CRLF), RequestParser::parseRequestLine),
+        METHOD(p -> p.tokenizer.next(SPACE), RequestParser::parseMethod),
+        URI(p -> p.tokenizer.next(SPACE), RequestParser::parseUri),
+        VERSION(p -> p.tokenizer.next(CRLF), RequestParser::parseVersion),
         HEADER(p -> p.tokenizer.next(CRLF), RequestParser::parseHeader),
         BODY(p -> p.tokenizer.next(p.contentLength), RequestParser::parseBody),
         CHUNK_SIZE(p -> p.tokenizer.next(CRLF), RequestParser::parseChunkSize),
@@ -41,7 +39,7 @@ class RequestParser {
 
     private final ByteTokenizer tokenizer;
 
-    private State state = State.REQUEST_LINE;
+    private State state = State.METHOD;
     private int contentLength;
     private int chunkSize;
     private ByteMerger chunks = new ByteMerger();
@@ -71,15 +69,18 @@ class RequestParser {
         return new Request(method, uri, version, headers, body);
     }
 
-    private void parseRequestLine(byte[] token) {
-        String line = new String(token);
-        Matcher matcher = REQUEST_LINE.matcher(line);
-        if (!matcher.matches()) {
-            throw new IllegalStateException("malformed request line");
-        }
-        method = matcher.group(1);
-        uri = matcher.group(2);
-        version = matcher.group(3);
+    private void parseMethod(byte[] token) {
+        method = new String(token);
+        state = State.URI;
+    }
+
+    private void parseUri(byte[] token) {
+        uri = new String(token);
+        state = State.VERSION;
+    }
+
+    private void parseVersion(byte[] token) {
+        version = new String(token);
         state = State.HEADER;
     }
 
@@ -100,13 +101,34 @@ class RequestParser {
                 state = State.BODY;
             }
         } else {
-            String line = new String(token);
-            Matcher matcher = HEADER_LINE.matcher(line);
-            if (!matcher.matches()) {
-                throw new IllegalStateException("malformed header line");
-            }
-            headers.add(new Header(matcher.group(1), matcher.group(2)));
+            headers.add(parseHeaderLine(token));
         }
+    }
+
+    private static Header parseHeaderLine(byte[] line) {
+        int colonIndex = indexOfColon(line);
+        if (colonIndex <= 0) {
+            throw new IllegalStateException("malformed header line");
+        }
+        int spaceIndex = colonIndex + 1;
+        while (spaceIndex < line.length && line[spaceIndex] == ' ') { // advance beyond variable-length space prefix
+            spaceIndex++;
+        }
+        if (spaceIndex == line.length) {
+            throw new IllegalStateException("malformed header line");
+        }
+        return new Header(
+                new String(line, 0, colonIndex),
+                new String(line, spaceIndex, line.length - spaceIndex));
+    }
+
+    private static int indexOfColon(byte[] line) {
+        for (int i = 0; i < line.length; i++) {
+            if (line[i] == ':') {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private void parseChunkSize(byte[] token) {
