@@ -47,13 +47,7 @@ public class EventLoopConcurrencyTest {
         });
         eventLoop = new EventLoop(options, new DisabledLogger(), handler);
         port = eventLoop.getPort();
-        eventLoopThread = new Thread(() -> {
-            try {
-                eventLoop.start();
-            } catch (IOException e) {
-                // thread terminates
-            }
-        });
+        eventLoopThread = new Thread(eventLoop::start);
         eventLoopThread.start();
     }
 

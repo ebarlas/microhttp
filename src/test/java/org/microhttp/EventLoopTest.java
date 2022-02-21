@@ -97,13 +97,7 @@ public class EventLoopTest {
                 logger,
                 (req, callback) -> executor.execute(() -> callback.accept(RESPONSE)));
         port = eventLoop.getPort();
-        eventLoopThread = new Thread(() -> {
-            try {
-                eventLoop.start();
-            } catch (IOException e) {
-                // thread terminates
-            }
-        });
+        eventLoopThread = new Thread(eventLoop::start);
         eventLoopThread.start();
     }
 

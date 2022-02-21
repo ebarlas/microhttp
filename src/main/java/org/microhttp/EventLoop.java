@@ -292,7 +292,17 @@ public class EventLoop {
         }
     }
 
-    public void start() throws IOException {
+    public void start() {
+        try {
+            doStart();
+        } catch (IOException e) {
+            if (logger.enabled()) {
+                logger.log(e, new LogEntry("event", "terminate"));
+            }
+        }
+    }
+
+    public void doStart() throws IOException {
         while (!stop) {
             selector.select(options.resolution().toMillis());
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
