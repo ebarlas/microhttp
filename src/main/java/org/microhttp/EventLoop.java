@@ -79,7 +79,7 @@ public class EventLoop {
         if (options.reuseAddr()) {
             serverSocketChannel.setOption(StandardSocketOptions.SO_REUSEADDR, options.reuseAddr());
         }
-        if (options.reuseAddr()) {
+        if (options.reusePort()) {
             serverSocketChannel.setOption(StandardSocketOptions.SO_REUSEPORT, options.reusePort());
         }
         serverSocketChannel.configureBlocking(false);
