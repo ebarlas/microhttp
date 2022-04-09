@@ -191,7 +191,9 @@ public class EventLoop {
             keepAlive = request.hasHeader(HEADER_CONNECTION, KEEP_ALIVE);
             Thread eventLoopThread = Thread.currentThread();
             handler.handle(request, res -> onResponse(res, eventLoopThread));
-            byteTokenizer.compact();
+            if (byteTokenizer.remaining() == 0 || byteTokenizer.position() > options.compactThreshold()) {
+                byteTokenizer.compact();
+            }
             requestParser = new RequestParser(byteTokenizer);
         }
 

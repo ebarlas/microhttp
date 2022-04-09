@@ -28,10 +28,10 @@ class RequestParser {
         CHUNK_TRAILER(p -> p.tokenizer.next(CRLF), (rp, token) -> rp.parseChunkTrailer()),
         DONE(null, null);
 
-        final Function<RequestParser, byte[]> tokenSupplier;
-        final BiConsumer<RequestParser, byte[]> tokenConsumer;
+        final Function<RequestParser, ByteArraySlice> tokenSupplier;
+        final BiConsumer<RequestParser, ByteArraySlice> tokenConsumer;
 
-        State(Function<RequestParser, byte[]> tokenSupplier, BiConsumer<RequestParser, byte[]> tokenConsumer) {
+        State(Function<RequestParser, ByteArraySlice> tokenSupplier, BiConsumer<RequestParser, ByteArraySlice> tokenConsumer) {
             this.tokenSupplier = tokenSupplier;
             this.tokenConsumer = tokenConsumer;
         }
@@ -56,11 +56,11 @@ class RequestParser {
 
     boolean parse() {
         while (state != State.DONE) {
-            byte[] token = state.tokenSupplier.apply(this);
-            if (token == null) {
+            ByteArraySlice slice = state.tokenSupplier.apply(this);
+            if (slice == null) {
                 return false;
             }
-            state.tokenConsumer.accept(this, token);
+            state.tokenConsumer.accept(this, slice);
         }
         return true;
     }
@@ -69,23 +69,23 @@ class RequestParser {
         return new Request(method, uri, version, headers, body);
     }
 
-    private void parseMethod(byte[] token) {
-        method = new String(token);
+    private void parseMethod(ByteArraySlice slice) {
+        method = slice.encode();
         state = State.URI;
     }
 
-    private void parseUri(byte[] token) {
-        uri = new String(token);
+    private void parseUri(ByteArraySlice slice) {
+        uri = slice.encode();
         state = State.VERSION;
     }
 
-    private void parseVersion(byte[] token) {
-        version = new String(token);
+    private void parseVersion(ByteArraySlice slice) {
+        version = slice.encode();
         state = State.HEADER;
     }
 
-    private void parseHeader(byte[] token) {
-        if (token.length == 0) { // CR-LF on own line, end of headers
+    private void parseHeader(ByteArraySlice slice) {
+        if (slice.length() == 0) { // CR-LF on own line, end of headers
             if (hasMultipleTransferLengths()) {
                 throw new IllegalStateException("multiple message lengths");
             }
@@ -101,39 +101,39 @@ class RequestParser {
                 state = State.BODY;
             }
         } else {
-            headers.add(parseHeaderLine(token));
+            headers.add(parseHeaderLine(slice));
         }
     }
 
-    private static Header parseHeaderLine(byte[] line) {
-        int colonIndex = indexOfColon(line);
-        if (colonIndex <= 0) {
+    private static Header parseHeaderLine(ByteArraySlice slice) {
+        int colonIndex = indexOfColon(slice);
+        if (colonIndex <= slice.offset()) {
             throw new IllegalStateException("malformed header line");
         }
         int spaceIndex = colonIndex + 1;
-        while (spaceIndex < line.length && line[spaceIndex] == ' ') { // advance beyond variable-length space prefix
+        while (spaceIndex < slice.offset() + slice.length() && slice.array()[spaceIndex] == ' ') { // advance beyond variable-length space prefix
             spaceIndex++;
         }
-        if (spaceIndex == line.length) {
+        if (spaceIndex == slice.offset() + slice.length()) {
             throw new IllegalStateException("malformed header line");
         }
         return new Header(
-                new String(line, 0, colonIndex),
-                new String(line, spaceIndex, line.length - spaceIndex));
+                new String(slice.array(), slice.offset(), colonIndex - slice.offset()),
+                new String(slice.array(), spaceIndex, slice.offset() + slice.length() - spaceIndex));
     }
 
-    private static int indexOfColon(byte[] line) {
-        for (int i = 0; i < line.length; i++) {
-            if (line[i] == ':') {
+    private static int indexOfColon(ByteArraySlice slice) {
+        for (int i = slice.offset(); i < slice.offset() + slice.length(); i++) {
+            if (slice.array()[i] == ':') {
                 return i;
             }
         }
         return -1;
     }
 
-    private void parseChunkSize(byte[] token) {
+    private void parseChunkSize(ByteArraySlice slice) {
         try {
-            chunkSize = Integer.parseInt(new String(token), RADIX_HEX);
+            chunkSize = Integer.parseInt(slice.encode(), RADIX_HEX);
         } catch (NumberFormatException e) {
             throw new IllegalStateException("invalid chunk size");
         }
@@ -142,8 +142,8 @@ class RequestParser {
                 : State.CHUNK_DATA;
     }
 
-    private void parseChunkData(byte[] token) {
-        chunks.add(token);
+    private void parseChunkData(ByteArraySlice slice) {
+        chunks.add(slice);
         state = State.CHUNK_DATA_END;
     }
 
@@ -156,8 +156,8 @@ class RequestParser {
         state = State.DONE;
     }
 
-    private void parseBody(byte[] token) {
-        body = token;
+    private void parseBody(ByteArraySlice slice) {
+        body = slice.extract();
         state = State.DONE;
     }
 

@@ -12,6 +12,10 @@ class ByteTokenizer {
     private int position;
     private int size;
 
+    int position() {
+        return position;
+    }
+
     int size() {
         return size;
     }
@@ -39,21 +43,21 @@ class ByteTokenizer {
         size += bufferLen;
     }
 
-    byte[] next(int length) {
+    ByteArraySlice next(int length) {
         if (size - position < length) {
             return null;
         }
-        byte[] result = Arrays.copyOfRange(array, position, position + length);
+        ByteArraySlice result = new ByteArraySlice(array, position, length);
         position += length;
         return result;
     }
 
-    byte[] next(byte[] delimiter) {
+    ByteArraySlice next(byte[] delimiter) {
         int index = indexOf(delimiter);
         if (index < 0) {
             return null;
         }
-        byte[] result = Arrays.copyOfRange(array, position, index);
+        ByteArraySlice result = new ByteArraySlice(array, position, index - position);
         position = index + delimiter.length;
         return result;
     }

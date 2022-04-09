@@ -11,16 +11,18 @@ class ByteTokenizerTest {
     void compact() {
         ByteTokenizer tokenizer = new ByteTokenizer();
         tokenizer.add(ByteBuffer.wrap("hello world".getBytes()));
-        Assertions.assertArrayEquals("hello".getBytes(), tokenizer.next(" ".getBytes()));
+        Assertions.assertArrayEquals("hello".getBytes(), tokenizer.next(" ".getBytes()).extract());
         Assertions.assertEquals(11, tokenizer.capacity());
         Assertions.assertEquals(5, tokenizer.remaining());
         tokenizer.compact();
         Assertions.assertEquals(5, tokenizer.capacity());
         Assertions.assertEquals(5, tokenizer.remaining());
-        Assertions.assertArrayEquals("world".getBytes(), tokenizer.next(5));
+        Assertions.assertEquals(0, tokenizer.position());
+        Assertions.assertArrayEquals("world".getBytes(), tokenizer.next(5).extract());
         tokenizer.compact();
         Assertions.assertEquals(0, tokenizer.capacity());
         Assertions.assertEquals(0, tokenizer.remaining());
+        Assertions.assertEquals(0, tokenizer.position());
     }
 
     @Test
@@ -54,8 +56,8 @@ class ByteTokenizerTest {
     void nextWithLength() {
         ByteTokenizer tokenizer = new ByteTokenizer();
         tokenizer.add(ByteBuffer.wrap("hello".getBytes()));
-        Assertions.assertArrayEquals("h".getBytes(), tokenizer.next(1));
-        Assertions.assertArrayEquals("ello".getBytes(), tokenizer.next(4));
+        Assertions.assertArrayEquals("h".getBytes(), tokenizer.next(1).extract());
+        Assertions.assertArrayEquals("ello".getBytes(), tokenizer.next(4).extract());
         Assertions.assertNull(tokenizer.next(1));
     }
 
@@ -66,9 +68,9 @@ class ByteTokenizerTest {
         tokenizer.add(ByteBuffer.wrap(" ".getBytes()));
         tokenizer.add(ByteBuffer.wrap("world".getBytes()));
         tokenizer.add(ByteBuffer.wrap("\r\n".getBytes()));
-        Assertions.assertArrayEquals("hello".getBytes(), tokenizer.next(" ".getBytes()));
+        Assertions.assertArrayEquals("hello".getBytes(), tokenizer.next(" ".getBytes()).extract());
         Assertions.assertNull(tokenizer.next(" ".getBytes()));
-        Assertions.assertArrayEquals("world".getBytes(), tokenizer.next("\r\n".getBytes()));
+        Assertions.assertArrayEquals("world".getBytes(), tokenizer.next("\r\n".getBytes()).extract());
         Assertions.assertNull(tokenizer.next("\r\n".getBytes()));
     }
 
