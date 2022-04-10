@@ -8,6 +8,7 @@ import java.util.function.Function;
 class RequestParser {
 
     private static final byte[] CRLF = "\r\n".getBytes();
+    private static final byte[] COLON = ":".getBytes();
     private static final byte[] SPACE = " ".getBytes();
 
     private static final String HEADER_CONTENT_LENGTH = "Content-Length";
@@ -20,7 +21,17 @@ class RequestParser {
         METHOD(p -> p.tokenizer.next(SPACE), RequestParser::parseMethod),
         URI(p -> p.tokenizer.next(SPACE), RequestParser::parseUri),
         VERSION(p -> p.tokenizer.next(CRLF), RequestParser::parseVersion),
-        HEADER(p -> p.tokenizer.next(CRLF), RequestParser::parseHeader),
+        HEADER_NAME(p -> {
+            var token = p.tokenizer.next(COLON);
+            return token != null ? token : p.tokenizer.next(CRLF);
+        }, (rp, token) -> {
+            if (token.length == 0) {
+                rp.parseHeaderEnd();
+            } else {
+                rp.parseHeaderName(token);
+            }
+        }),
+        HEADER_VALUE(p -> p.tokenizer.next(CRLF), RequestParser::parseHeaderValue),
         BODY(p -> p.tokenizer.next(p.contentLength), RequestParser::parseBody),
         CHUNK_SIZE(p -> p.tokenizer.next(CRLF), RequestParser::parseChunkSize),
         CHUNK_DATA(p -> p.tokenizer.next(p.chunkSize), RequestParser::parseChunkData),
@@ -47,6 +58,7 @@ class RequestParser {
     private String method;
     private String uri;
     private String version;
+    private String headerName;
     private List<Header> headers = new ArrayList<>();
     private byte[] body;
 
@@ -81,54 +93,34 @@ class RequestParser {
 
     private void parseVersion(byte[] token) {
         version = new String(token);
-        state = State.HEADER;
+        state = State.HEADER_NAME;
     }
 
-    private void parseHeader(byte[] token) {
-        if (token.length == 0) { // CR-LF on own line, end of headers
-            if (hasMultipleTransferLengths()) {
-                throw new IllegalStateException("multiple message lengths");
-            }
-            Integer contentLength = findContentLength();
-            if (contentLength == null) {
-                if (hasChunkedEncodingHeader()) {
-                    state = State.CHUNK_SIZE;
-                } else {
-                    state = State.DONE;
-                }
+    private void parseHeaderName(byte[] token) {
+        headerName = new String(token);
+        state = State.HEADER_VALUE;
+    }
+
+    private void parseHeaderValue(byte[] token) {
+        headers.add(new Header(headerName, new String(token).trim()));
+        state = State.HEADER_NAME;
+    }
+
+    private void parseHeaderEnd() {
+        if (hasMultipleTransferLengths()) {
+            throw new IllegalStateException("multiple message lengths");
+        }
+        Integer contentLength = findContentLength();
+        if (contentLength == null) {
+            if (hasChunkedEncodingHeader()) {
+                state = State.CHUNK_SIZE;
             } else {
-                this.contentLength = contentLength;
-                state = State.BODY;
+                state = State.DONE;
             }
         } else {
-            headers.add(parseHeaderLine(token));
+            this.contentLength = contentLength;
+            state = State.BODY;
         }
-    }
-
-    private static Header parseHeaderLine(byte[] line) {
-        int colonIndex = indexOfColon(line);
-        if (colonIndex <= 0) {
-            throw new IllegalStateException("malformed header line");
-        }
-        int spaceIndex = colonIndex + 1;
-        while (spaceIndex < line.length && line[spaceIndex] == ' ') { // advance beyond variable-length space prefix
-            spaceIndex++;
-        }
-        if (spaceIndex == line.length) {
-            throw new IllegalStateException("malformed header line");
-        }
-        return new Header(
-                new String(line, 0, colonIndex),
-                new String(line, spaceIndex, line.length - spaceIndex));
-    }
-
-    private static int indexOfColon(byte[] line) {
-        for (int i = 0; i < line.length; i++) {
-            if (line[i] == ':') {
-                return i;
-            }
-        }
-        return -1;
     }
 
     private void parseChunkSize(byte[] token) {
