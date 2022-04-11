@@ -32,12 +32,6 @@ public class EventLoopTest {
     static EventLoop eventLoop;
     static Thread eventLoopThread;
 
-    static final Response RESPONSE = new Response(
-            200,
-            "OK",
-            List.of(new Header("Content-Type", "text/plain")),
-            "hello world\n".getBytes());
-
     static final String HTTP10_REQUEST = """
             GET /file HTTP/1.0\r
             \r
@@ -60,11 +54,10 @@ public class EventLoopTest {
 
     static final String HTTP10_RESPONSE = """
             HTTP/1.0 200 OK\r
-            Content-Length: 12\r
+            Content-Length: %d\r
             Content-Type: text/plain\r
             \r
-            hello world
-            """;
+            %s""";
 
     static final String HTTP11_REQUEST = """
             GET /file HTTP/1.1\r
@@ -73,15 +66,16 @@ public class EventLoopTest {
 
     static final String HTTP11_RESPONSE = """
             HTTP/1.1 200 OK\r
-            Content-Length: 12\r
+            Content-Length: %d\r
             Content-Type: text/plain\r
             \r
-            hello world
-            """;
+            %s""";
 
     Socket socket;
     InputStream inputStream;
     OutputStream outputStream;
+
+    static volatile String responseBody;
 
     @BeforeAll
     static void beforeAll() throws IOException {
@@ -95,7 +89,11 @@ public class EventLoopTest {
         eventLoop = new EventLoop(
                 options,
                 logger,
-                (req, callback) -> executor.execute(() -> callback.accept(RESPONSE)));
+                (req, callback) -> executor.execute(() -> callback.accept(new Response(
+                        200,
+                        "OK",
+                        List.of(new Header("Content-Type", "text/plain")),
+                        responseBody.getBytes()))));
         port = eventLoop.getPort();
         eventLoopThread = new Thread(eventLoop::start);
         eventLoopThread.start();
@@ -110,6 +108,7 @@ public class EventLoopTest {
 
     @BeforeEach
     void beforeEach() throws IOException {
+        responseBody = "hello world\n";
         logger.clear();
         socket = new Socket("localhost", port);
         socket.setSoTimeout(5_000);
@@ -126,7 +125,17 @@ public class EventLoopTest {
     void http10RequestNonPersistent() throws IOException {
         outputStream.write(HTTP10_REQUEST.getBytes());
         byte[] received = inputStream.readAllBytes();
-        Assertions.assertArrayEquals(HTTP10_RESPONSE.getBytes(), received);
+        Assertions.assertArrayEquals(HTTP10_RESPONSE.formatted(responseBody.length(), responseBody).getBytes(), received);
+        Assertions.assertTrue(logger.hasEventLog("close_after_response"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {100_000, 1_000_000, 10_000_000})
+    void largeResponsePayloads(int size) throws IOException {
+        responseBody = IntStream.range(0, size).mapToObj(n -> "x").collect(Collectors.joining());
+        outputStream.write(HTTP10_REQUEST.getBytes());
+        byte[] received = inputStream.readAllBytes();
+        Assertions.assertArrayEquals(HTTP10_RESPONSE.formatted(responseBody.length(), responseBody).getBytes(), received);
         Assertions.assertTrue(logger.hasEventLog("close_after_response"));
     }
 
@@ -145,7 +154,7 @@ public class EventLoopTest {
         outputStream.write(HTTP11_REQUEST.getBytes());
         socket.shutdownOutput();
         byte[] received = inputStream.readAllBytes();
-        Assertions.assertArrayEquals(HTTP11_RESPONSE.getBytes(), received);
+        Assertions.assertArrayEquals(HTTP11_RESPONSE.formatted(responseBody.length(), responseBody).getBytes(), received);
         Assertions.assertTrue(logger.hasEventLog("read_close"));
     }
 
@@ -156,7 +165,9 @@ public class EventLoopTest {
         outputStream.write(request.getBytes());
         socket.shutdownOutput();
         byte[] received = inputStream.readAllBytes();
-        String expected = IntStream.range(0, numRequests).mapToObj(n -> HTTP11_RESPONSE).collect(Collectors.joining());
+        String expected = IntStream.range(0, numRequests)
+                .mapToObj(n -> HTTP11_RESPONSE.formatted(responseBody.length(), responseBody))
+                .collect(Collectors.joining());
         Assertions.assertArrayEquals(expected.getBytes(), received);
         Assertions.assertEquals(numRequests - 1, logger.countEventLogs("pipeline_request"));
     }

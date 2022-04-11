@@ -14,7 +14,7 @@ class SchedulerTest {
         Scheduler scheduler = new Scheduler(clock);
         Runnable first = () -> {};
         Runnable second = () -> {};
-        scheduler.execute(first);
+        scheduler.schedule(first, Duration.ZERO);
         scheduler.schedule(second, Duration.ofNanos(1));
         Assertions.assertEquals(List.of(first), scheduler.expired());
         Assertions.assertEquals(1, scheduler.size());

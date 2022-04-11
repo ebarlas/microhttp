@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -12,26 +11,33 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * EventLoop is an HTTP server implementation. It provides connection management, network I/O,
  * request parsing, and request dispatching.
  * <p>
- * The diagram below outlines the various connection states.
+ * The diagram below outlines the various connection states. Each state corresponds to the interest-ops of a
+ * Socket Channel.
  *
  * <pre>
- *               Read                                            Write
- *              Partial                                         Partial
- *              +-----+                                         +-----+
- *              |     |                                         |     |    Write
- *              |     v                                         |     v    Complete
- *            +-+--------+  Read-     +----------+  Write-    +-+--------+ Non-       +----------+
- *    Accept  |          |  Complete  |          |  Ready     |          | Persist.   |          |
- * -----------+ READABLE +----------->| DISPATCH +----------->| WRITABLE +----------->|  CLOSED  |
+ *                                                   Write Complete Non-Persistent
+ *                                   Write     +--------------------------------------------+
+ *                                   Complete  |                                            |
+ *              Read                 Request   |                Write                       |
+ *              Partial              Pipelined |                Partial                     |
+ *              +-----+                +-----+ |                +-----+                     |
+ *              |     |                |     | |                |     |    Write            |
+ *              |     v                |     v |                |     v    Complete         v
+ *            +-+--------+  Read-     ++-------+-+  Write-    +-+--------+ Non-       +----------+
+ *    Accept  |          |  Complete  |          |  Partial   |          | Persist.   |          |
+ * ---------->| READABLE +----------->|   NONE   +----------->| WRITABLE +----------->|  CLOSED  |
  *            |          |            |          |            |          |            |          |
- *            +----------+            +----------+            +-+---+----+            +----------+
- *                 ^                        ^      Request      |   |
+ *            +----+-----+            +----------+ Write      +-+---+----+            +----------+
+ *                 |                        ^      Complete     |   |
+ *                 |                        |      Request      |   |
  *                 |                        |      Pipelined    |   |
  *                 |                        +-------------------+   |
  *                 |                                                |
@@ -45,13 +51,15 @@ public class EventLoop {
     private final Logger logger;
     private final Handler handler;
 
-    private final Scheduler scheduler;
+    private final Scheduler timeoutQueue;
+    private final Queue<Runnable> taskQueue;
     private final ByteBuffer readBuffer;
     private final Selector selector;
     private final ServerSocketChannel serverSocketChannel;
 
     private long connectionCounter;
 
+    private Thread eventLoopThread;
     private volatile boolean stop;
 
     public EventLoop(Handler handler) throws IOException {
@@ -67,7 +75,8 @@ public class EventLoop {
         this.logger = logger;
         this.handler = handler;
 
-        scheduler = new Scheduler();
+        timeoutQueue = new Scheduler();
+        taskQueue = new ConcurrentLinkedQueue<>();
         readBuffer = ByteBuffer.allocateDirect(options.readBufferSize());
         selector = Selector.open();
 
@@ -116,7 +125,7 @@ public class EventLoop {
             byteTokenizer = new ByteTokenizer();
             id = Long.toString(connectionCounter++);
             requestParser = new RequestParser(byteTokenizer);
-            socketTimeoutTask = scheduler.schedule(this::onSocketTimeout, options.socketTimeout());
+            socketTimeoutTask = timeoutQueue.schedule(this::onSocketTimeout, options.socketTimeout());
         }
 
         private void onSocketTimeout() {
@@ -184,22 +193,23 @@ public class EventLoop {
             }
         }
 
-        private void onParseRequest() throws ClosedChannelException {
-            socketChannel.register(selector, 0, this);
+        private void onParseRequest() {
+            if (selectionKey.interestOps() != 0) {
+                selectionKey.interestOps(0);
+            }
             Request request = requestParser.request();
             httpOneDotZero = request.version().equalsIgnoreCase(HTTP_1_0);
             keepAlive = request.hasHeader(HEADER_CONNECTION, KEEP_ALIVE);
-            Thread eventLoopThread = Thread.currentThread();
-            handler.handle(request, res -> onResponse(res, eventLoopThread));
             byteTokenizer.compact();
             requestParser = new RequestParser(byteTokenizer);
+            handler.handle(request, this::onResponse);
         }
 
-        private void onResponse(Response response, Thread eventLoopThread) {
+        private void onResponse(Response response) {
             // enqueuing the callback invocation and waking the selector
             // ensures that the response callback works properly when
             // invoked inline from the event loop thread or a separate background thread
-            scheduler.execute(() -> {
+            taskQueue.add(() -> {
                 try {
                     prepareToWriteResponse(response);
                 } catch (IOException e) {
@@ -218,7 +228,7 @@ public class EventLoop {
             }
         }
 
-        private void prepareToWriteResponse(Response response) throws ClosedChannelException {
+        private void prepareToWriteResponse(Response response) throws IOException {
             String version = httpOneDotZero ? HTTP_1_0 : HTTP_1_1;
             List<Header> headers = new ArrayList<>();
             if (httpOneDotZero && keepAlive) {
@@ -228,13 +238,13 @@ public class EventLoop {
                 headers.add(new Header(HEADER_CONTENT_LENGTH, Integer.toString(response.body().length)));
             }
             writeBuffer = ByteBuffer.wrap(response.serialize(version, headers));
-            socketChannel.register(selector, SelectionKey.OP_WRITE, this);
             if (logger.enabled()) {
                 logger.log(
                         new LogEntry("event", "response_ready"),
                         new LogEntry("id", id),
                         new LogEntry("num_bytes", Integer.toString(writeBuffer.remaining())));
             }
+            doOnWritable();
         }
 
         private void onWritable() {
@@ -277,10 +287,13 @@ public class EventLoop {
                         onParseRequest();
                     } else { // switch back to read mode
                         writeBuffer = null;
-                        socketChannel.register(selector, SelectionKey.OP_READ, this);
+                        selectionKey.interestOps(SelectionKey.OP_READ);
                     }
                 }
-            } else { // response not fully written, remain in write mode
+            } else { // response not fully written, switch to or remain in write mode
+                if ((selectionKey.interestOps() & SelectionKey.OP_WRITE) == 0) {
+                    selectionKey.interestOps(SelectionKey.OP_WRITE);
+                }
                 if (logger.enabled()) {
                     logger.log(
                             new LogEntry("event", "write"),
@@ -312,6 +325,7 @@ public class EventLoop {
     }
 
     public void doStart() throws IOException {
+        eventLoopThread = Thread.currentThread();
         while (!stop) {
             selector.select(options.resolution().toMillis());
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
@@ -327,8 +341,11 @@ public class EventLoop {
                 }
                 it.remove();
             }
-            List<Runnable> tasks = scheduler.expired();
-            tasks.forEach(Runnable::run);
+            timeoutQueue.expired().forEach(Runnable::run);
+            Runnable task;
+            while ((task = taskQueue.poll()) != null) {
+                task.run();
+            }
         }
     }
 
