@@ -83,7 +83,7 @@ public class EventLoopTest {
         executor = Executors.newFixedThreadPool(1);
         Options options = new Options()
                 .withPort(0)
-                .withSocketTimeout(Duration.ofMillis(2_500))
+                .withRequestTimeout(Duration.ofMillis(2_500))
                 .withReadBufferSize(1_024)
                 .withMaxRequestSize(2_048);
         eventLoop = new EventLoop(
@@ -176,7 +176,7 @@ public class EventLoopTest {
     void timeoutOnServer() throws IOException {
         int data = inputStream.read();
         Assertions.assertEquals(-1, data);
-        Assertions.assertTrue(logger.hasEventLog("socket_timeout"));
+        Assertions.assertTrue(logger.hasEventLog("request_timeout"));
     }
 
     @Test

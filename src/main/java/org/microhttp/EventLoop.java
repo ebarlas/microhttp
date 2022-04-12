@@ -19,8 +19,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * EventLoop is an HTTP server implementation. It provides connection management, network I/O,
  * request parsing, and request dispatching.
  * <p>
- * The diagram below outlines the various connection states. Each state corresponds to the interest-ops of a
- * Socket Channel.
+ * The diagram below outlines the various connection states.
  *
  * <pre>
  *                                                   Write Complete Non-Persistent
@@ -33,7 +32,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  *              |     v                |     v |                |     v    Complete         v
  *            +-+--------+  Read-     ++-------+-+  Write-    +-+--------+ Non-       +----------+
  *    Accept  |          |  Complete  |          |  Partial   |          | Persist.   |          |
- * ---------->| READABLE +----------->|   NONE   +----------->| WRITABLE +----------->|  CLOSED  |
+ * ---------->| READABLE +----------->| DISPATCH +----------->| WRITABLE +----------->|  CLOSED  |
  *            |          |            |          |            |          |            |          |
  *            +----+-----+            +----------+ Write      +-+---+----+            +----------+
  *                 |                        ^      Complete     |   |
@@ -115,7 +114,7 @@ public class EventLoop {
         final String id;
         RequestParser requestParser;
         ByteBuffer writeBuffer;
-        ScheduledTask socketTimeoutTask;
+        Cancellable requestTimeoutTask;
         boolean httpOneDotZero;
         boolean keepAlive;
 
@@ -125,13 +124,13 @@ public class EventLoop {
             byteTokenizer = new ByteTokenizer();
             id = Long.toString(connectionCounter++);
             requestParser = new RequestParser(byteTokenizer);
-            socketTimeoutTask = timeoutQueue.schedule(this::onSocketTimeout, options.socketTimeout());
+            requestTimeoutTask = timeoutQueue.schedule(this::onRequestTimeout, options.requestTimeout());
         }
 
-        private void onSocketTimeout() {
+        private void onRequestTimeout() {
             if (logger.enabled()) {
                 logger.log(
-                        new LogEntry("event", "socket_timeout"),
+                        new LogEntry("event", "request_timeout"),
                         new LogEntry("id", id));
             }
             failSafeClose();
@@ -162,7 +161,6 @@ public class EventLoop {
                 failSafeClose();
                 return;
             }
-            socketTimeoutTask = socketTimeoutTask.reschedule();
             readBuffer.flip();
             byteTokenizer.add(readBuffer);
             if (logger.enabled()) {
@@ -196,6 +194,10 @@ public class EventLoop {
         private void onParseRequest() {
             if (selectionKey.interestOps() != 0) {
                 selectionKey.interestOps(0);
+            }
+            if (requestTimeoutTask != null) {
+                requestTimeoutTask.cancel();
+                requestTimeoutTask = null;
             }
             Request request = requestParser.request();
             httpOneDotZero = request.version().equalsIgnoreCase(HTTP_1_0);
@@ -263,6 +265,7 @@ public class EventLoop {
         private void doOnWritable() throws IOException {
             int numBytes = socketChannel.write(writeBuffer);
             if (!writeBuffer.hasRemaining()) { // response fully written
+                writeBuffer = null; // done with current write buffer, remove reference
                 if (logger.enabled()) {
                     logger.log(
                             new LogEntry("event", "write_response"),
@@ -286,7 +289,7 @@ public class EventLoop {
                         }
                         onParseRequest();
                     } else { // switch back to read mode
-                        writeBuffer = null;
+                        requestTimeoutTask = timeoutQueue.schedule(this::onRequestTimeout, options.requestTimeout());
                         selectionKey.interestOps(SelectionKey.OP_READ);
                     }
                 }
@@ -305,7 +308,9 @@ public class EventLoop {
 
         private void failSafeClose() {
             try {
-                socketTimeoutTask.cancel();
+                if (requestTimeoutTask != null) {
+                    requestTimeoutTask.cancel();
+                }
                 selectionKey.cancel();
                 socketChannel.close();
             } catch (IOException e) {

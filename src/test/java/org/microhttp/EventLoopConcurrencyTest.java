@@ -34,7 +34,7 @@ public class EventLoopConcurrencyTest {
         executor = Executors.newFixedThreadPool(1);
         Options options = new Options()
                 .withPort(0)
-                .withSocketTimeout(Duration.ofMillis(2_500))
+                .withRequestTimeout(Duration.ofMillis(2_500))
                 .withReadBufferSize(1_024)
                 .withMaxRequestSize(2_048);
         Handler handler = (req, callback) -> executor.execute(() -> {

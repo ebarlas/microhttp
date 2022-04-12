@@ -87,7 +87,7 @@ Response response = new Response(
 Options options = new Options()
         .withHost("localhost")
         .withPort(8080)
-        .withSocketTimeout(Duration.ofSeconds(60))
+        .withRequestTimeout(Duration.ofSeconds(60))
         .withResolution(Duration.ofMillis(100))
         .withReadBufferSize(1_024 * 64)
         .withMaxRequestSize(1_024 * 1_024)

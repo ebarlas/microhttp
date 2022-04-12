@@ -9,7 +9,7 @@ public class Options {
     private boolean reuseAddr = false;
     private boolean reusePort = false;
     private Duration resolution = Duration.ofMillis(100);
-    private Duration socketTimeout = Duration.ofSeconds(60);
+    private Duration requestTimeout = Duration.ofSeconds(60);
     private int readBufferSize = 1_024 * 64;
     private int acceptLength = 0;
     private int maxRequestSize = 1_024 * 1_024;
@@ -34,8 +34,8 @@ public class Options {
         return resolution;
     }
 
-    public Duration socketTimeout() {
-        return socketTimeout;
+    public Duration requestTimeout() {
+        return requestTimeout;
     }
 
     public int readBufferSize() {
@@ -75,8 +75,8 @@ public class Options {
         return this;
     }
 
-    public Options withSocketTimeout(Duration socketTimeout) {
-        this.socketTimeout = socketTimeout;
+    public Options withRequestTimeout(Duration requestTimeout) {
+        this.requestTimeout = requestTimeout;
         return this;
     }
 
