@@ -10,7 +10,7 @@ public class Options {
     private boolean reusePort = false;
     private Duration resolution = Duration.ofMillis(100);
     private Duration requestTimeout = Duration.ofSeconds(60);
-    private int readBufferSize = 1_024 * 64;
+    private int bufferSize = 1_024 * 64;
     private int acceptLength = 0;
     private int maxRequestSize = 1_024 * 1_024;
     private int concurrency = Runtime.getRuntime().availableProcessors();
@@ -40,7 +40,7 @@ public class Options {
     }
 
     public int readBufferSize() {
-        return readBufferSize;
+        return bufferSize;
     }
 
     public int acceptLength() {
@@ -86,7 +86,7 @@ public class Options {
     }
 
     public Options withReadBufferSize(int readBufferSize) {
-        this.readBufferSize = readBufferSize;
+        this.bufferSize = readBufferSize;
         return this;
     }
 

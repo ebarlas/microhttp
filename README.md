@@ -89,7 +89,7 @@ Options options = new Options()
         .withPort(8080)
         .withRequestTimeout(Duration.ofSeconds(60))
         .withResolution(Duration.ofMillis(100))
-        .withReadBufferSize(1_024 * 64)
+        .withBufferSize(1_024 * 64)
         .withMaxRequestSize(1_024 * 1_024)
         .withAcceptLength(0)
         .withConcurrency(4);

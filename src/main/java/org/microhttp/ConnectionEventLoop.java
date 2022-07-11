@@ -53,7 +53,7 @@ class ConnectionEventLoop {
 
     private final Scheduler timeoutQueue;
     private final Queue<Runnable> taskQueue;
-    private final ByteBuffer readBuffer;
+    private final ByteBuffer buffer;
     private final Selector selector;
     private final Thread thread;
 
@@ -71,7 +71,7 @@ class ConnectionEventLoop {
 
         timeoutQueue = new Scheduler();
         taskQueue = new ConcurrentLinkedQueue<>();
-        readBuffer = ByteBuffer.allocateDirect(options.readBufferSize());
+        buffer = ByteBuffer.allocateDirect(options.readBufferSize());
         selector = Selector.open();
         thread = new Thread(this::run, "connection-event-loop");
     }
@@ -127,8 +127,8 @@ class ConnectionEventLoop {
         }
 
         private void doOnReadable() throws IOException {
-            readBuffer.clear();
-            int numBytes = socketChannel.read(readBuffer);
+            buffer.clear();
+            int numBytes = socketChannel.read(buffer);
             if (numBytes < 0) {
                 if (logger.enabled()) {
                     logger.log(
@@ -138,8 +138,8 @@ class ConnectionEventLoop {
                 failSafeClose();
                 return;
             }
-            readBuffer.flip();
-            byteTokenizer.add(readBuffer);
+            buffer.flip();
+            byteTokenizer.add(buffer);
             if (logger.enabled()) {
                 logger.log(
                         new LogEntry("event", "read_bytes"),
@@ -239,8 +239,21 @@ class ConnectionEventLoop {
             }
         }
 
+        private void transferToDirectBufferForWrite() {
+            buffer.clear(); // pos = 0, limit = capacity
+            int amount = Math.min(buffer.remaining(), writeBuffer.remaining()); // determine transfer quantity
+            buffer.put(writeBuffer.array(), writeBuffer.position(), amount); // do transfer
+            buffer.flip();
+            writeBuffer.position(writeBuffer.position() + amount); // advance write buffer
+        }
+
+        private int doWrite() throws IOException {
+            transferToDirectBufferForWrite();
+            return socketChannel.write(buffer);
+        }
+
         private void doOnWritable() throws IOException {
-            int numBytes = socketChannel.write(writeBuffer);
+            int numBytes = doWrite();
             if (!writeBuffer.hasRemaining()) { // response fully written
                 writeBuffer = null; // done with current write buffer, remove reference
                 if (logger.enabled()) {
