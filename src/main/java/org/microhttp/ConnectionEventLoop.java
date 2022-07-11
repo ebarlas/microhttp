@@ -343,9 +343,10 @@ class ConnectionEventLoop {
 
     void register(SocketChannel socketChannel) throws IOException {
         socketChannel.configureBlocking(false);
-        SelectionKey selectionKey = socketChannel.register(selector, SelectionKey.OP_READ);
+        SelectionKey selectionKey = socketChannel.register(selector, 0);
         Connection connection = new Connection(socketChannel, selectionKey);
         selectionKey.attach(connection);
+        selectionKey.interestOps(SelectionKey.OP_READ);
         if (logger.enabled()) {
             logger.log(
                     new LogEntry("event", "accept"),
