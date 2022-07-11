@@ -13,6 +13,7 @@ public class Options {
     private int readBufferSize = 1_024 * 64;
     private int acceptLength = 0;
     private int maxRequestSize = 1_024 * 1_024;
+    private int concurrency = Runtime.getRuntime().availableProcessors();
 
     public String host() {
         return host;
@@ -48,6 +49,10 @@ public class Options {
 
     public int maxRequestSize() {
         return maxRequestSize;
+    }
+
+    public int concurrency() {
+        return concurrency;
     }
 
     public Options withHost(String host) {
@@ -92,6 +97,11 @@ public class Options {
 
     public Options withMaxRequestSize(int maxRequestSize) {
         this.maxRequestSize = maxRequestSize;
+        return this;
+    }
+
+    public Options withConcurrency(int concurrency) {
+        this.concurrency = concurrency;
         return this;
     }
 }

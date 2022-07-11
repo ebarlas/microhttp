@@ -30,7 +30,6 @@ public class EventLoopTest {
     static ExecutorService executor;
     static int port;
     static EventLoop eventLoop;
-    static Thread eventLoopThread;
 
     static final String HTTP10_REQUEST = """
             GET /file HTTP/1.0\r
@@ -94,15 +93,14 @@ public class EventLoopTest {
                         "OK",
                         List.of(new Header("Content-Type", "text/plain")),
                         responseBody.getBytes()))));
+        eventLoop.start();
         port = eventLoop.getPort();
-        eventLoopThread = new Thread(eventLoop::start);
-        eventLoopThread.start();
     }
 
     @AfterAll
     static void afterAll() throws InterruptedException {
         eventLoop.stop();
-        eventLoopThread.join();
+        eventLoop.join();
         executor.shutdown();
     }
 

@@ -27,7 +27,6 @@ public class EventLoopConcurrencyTest {
     static ExecutorService executor;
     static int port;
     static EventLoop eventLoop;
-    static Thread eventLoopThread;
 
     @BeforeAll
     static void beforeAll() throws IOException {
@@ -46,15 +45,14 @@ public class EventLoopConcurrencyTest {
             callback.accept(response);
         });
         eventLoop = new EventLoop(options, new DisabledLogger(), handler);
+        eventLoop.start();
         port = eventLoop.getPort();
-        eventLoopThread = new Thread(eventLoop::start);
-        eventLoopThread.start();
     }
 
     @AfterAll
     static void afterAll() throws InterruptedException {
         eventLoop.stop();
-        eventLoopThread.join();
+        eventLoop.join();
         executor.shutdown();
     }
 
