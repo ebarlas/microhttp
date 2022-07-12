@@ -149,9 +149,13 @@ of throughput in an integrated system with many components and dependencies.
 It simply returns "hello world" in a tiny, plain-text response to every request. Requests are handled in the context of
 the event loop thread, directly within the `Handler.handle` method.
 
+```
+./jdk-18.0.1.1/bin/java -cp microhttp-0.8-SNAPSHOT.jar org.microhttp.ThroughputServer
+```
+
 ### Benchmark
 
-A request rate of over 1,000,000 request per second was consistently reproducible.
+With HTTP pipelining, a request rate of over 1,000,000 requests per second was consistently reproducible.
 
 In the 1-minute run below, a rate of 1,105,526 requests per second was achieved.
 
@@ -185,6 +189,38 @@ Requests/sec: 1105525.70
 Transfer/sec:     81.18MB
 ```
 
+***
+
+Without HTTP pipelining, a request rate of over 450,000 requests per second was consistently reproducible.
+
+In the 1-minute run below, a rate of 461,370 requests per second was achieved.
+
+* 100 concurrent connections
+* 8 wrk worker threads
+* 10 second timeout
+
+No errors occurred and the 99th percentile response time was exceptional.
+
+```
+$ date
+Tue Jul 12 16:27:45 UTC 2022
+
+$ ./wrk -H "Host: 10.39.196.71:8080" -H "Accept: text/plain" -H "Connection: keep-alive" --latency -d 60s -c 100 --timeout 10 -t 8 http://10.39.196.71:8080/
+Running 1m test @ http://10.39.196.71:8080/
+  8 threads and 100 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   208.97us    1.37ms 204.90ms   99.96%
+    Req/Sec    58.13k     2.82k   80.73k    97.89%
+  Latency Distribution
+     50%  188.00us
+     75%  221.00us
+     90%  255.00us
+     99%  328.00us
+  27727950 requests in 1.00m, 1.99GB read
+Requests/sec: 461369.54
+Transfer/sec:     33.88MB
+```
+
 ## Concurrency
 
 The goal of concurrency benchmarks is to gauge the number of concurrent connections and clients
@@ -208,6 +244,10 @@ sysctl net.ipv4.tcp_max_syn_backlog=8192
 "hello world" responses are handled in a separate background thread after an injected one-second delay.
 The one-second delay dramatically reduces the resource footprint since requests and responses
 aren't speeding over each connection continuously. This leaves room to scale up connections, which is the metric of interest.
+
+```
+./jdk-18.0.1.1/bin/java -cp microhttp-0.8-SNAPSHOT.jar org.microhttp.ConcurrencyServer 8192
+```
 
 ### Benchmark
 
