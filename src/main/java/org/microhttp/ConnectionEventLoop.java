@@ -15,8 +15,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * This class represents an independent, threaded event loop for managed a group of connections.
- * It has its own selector, byte buffer, and state-per-connection.
+ * This class represents an independent, threaded event loop for managing a group of connections.
+ * It has its own selector, direct off-heap byte buffer, timeout queue, task queue, and state-per-connection.
+ * <p>
+ * ConnectionEventLoop instances are managed by a parent EventLoop.
+ *
  * <p>
  * The diagram below outlines the various connection states.
  *
