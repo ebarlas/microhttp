@@ -12,6 +12,8 @@ import java.util.TreeSet;
  * Scheduler is a simple data structure for efficiently scheduling deferred tasks and draining
  * expired tasks. A {@link Cancellable} handle is returned to clients when a new task is scheduled.
  * That handle can be used to cancel a task.
+ *
+ * Scheduler is thread-safe. Separate threads can schedule and drain tasks.
  */
 class Scheduler {
 
@@ -28,17 +30,17 @@ class Scheduler {
         this.tasks = new TreeSet<>(Comparator.comparing((Task t) -> t.time).thenComparing(t -> t.id));
     }
 
-    int size() {
+    synchronized int size() {
         return tasks.size();
     }
 
-    Cancellable schedule(Runnable task, Duration duration) {
+    synchronized Cancellable schedule(Runnable task, Duration duration) {
         Task t = new Task(task, clock.nanoTime() + duration.toNanos(), counter++);
         tasks.add(t);
         return t;
     }
 
-    List<Runnable> expired() {
+    synchronized List<Runnable> expired() {
         long time = clock.nanoTime();
         List<Runnable> result = new ArrayList<>();
         Iterator<Task> it = tasks.iterator();
@@ -48,6 +50,10 @@ class Scheduler {
             it.remove();
         }
         return result;
+    }
+
+    private synchronized void cancel(Task task) {
+        tasks.remove(task);
     }
 
     class Task implements Cancellable {
@@ -63,7 +69,7 @@ class Scheduler {
 
         @Override
         public void cancel() {
-            tasks.remove(this);
+            Scheduler.this.cancel(this);
         }
     }
 
