@@ -354,12 +354,25 @@ class ConnectionEventLoop {
         }
     }
 
-    void register(SocketChannel socketChannel) throws IOException {
+    void register(SocketChannel socketChannel) {
+        taskQueue.add(() -> {
+            try {
+                doRegister(socketChannel);
+            } catch (IOException e) {
+                logger.log(e, new LogEntry("event", "register_error"));
+                try {
+                    socketChannel.close();
+                } catch (IOException ignore) {}
+            }
+        });
+        selector.wakeup(); // wakeup event loop thread to process task immediately
+    }
+
+    private void doRegister(SocketChannel socketChannel) throws IOException {
         socketChannel.configureBlocking(false);
-        SelectionKey selectionKey = socketChannel.register(selector, 0);
+        SelectionKey selectionKey = socketChannel.register(selector, SelectionKey.OP_READ);
         Connection connection = new Connection(socketChannel, selectionKey);
         selectionKey.attach(connection);
-        selectionKey.interestOps(SelectionKey.OP_READ);
         if (logger.enabled()) {
             logger.log(
                     new LogEntry("event", "accept"),
