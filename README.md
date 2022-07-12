@@ -158,6 +158,7 @@ In the 1-minute run below, a rate of 1,105,526 requests per second was achieved.
 * 100 concurrent connections
 * 1 wrk worker threads
 * 10 second timeout
+* 16 pipelined requests
 
 No custom kernel parameters were set beyond the AMI defaults for this test.
 
