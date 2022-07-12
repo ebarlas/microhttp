@@ -122,7 +122,7 @@ eventLoop.join();
 
 # Benchmarks
 
-These benchmark were performed on July 12, 2022 with commit `a1b02d206e02bf585a57a67dd4ec5f94f16e1a22`.
+These benchmark were performed on July 12, 2022 with commit `78f54e84e86cdd038c87baaf45b7973a8f088cf7`.
 
 The experiments detailed below were conducted on a pair of EC2 instances in AWS,
 one running the server and another running the client.
@@ -157,7 +157,7 @@ the event loop thread, directly within the `Handler.handle` method.
 
 With HTTP pipelining, a request rate of over 1,000,000 requests per second was consistently reproducible.
 
-In the 1-minute run below, a rate of 1,105,526 requests per second was achieved.
+In the 1-minute run below, a rate of `1,098,810` requests per second was achieved.
 
 * 100 concurrent connections
 * 1 wrk worker threads
@@ -171,29 +171,29 @@ given that client and server were both CPU-bound.
 
 ```
 $ date
-Tue Jul 12 16:01:59 UTC 2022
+Tue Jul 12 17:11:05 UTC 2022
 
 $ ./wrk -H "Host: 10.39.196.71:8080" -H "Accept: text/plain" -H "Connection: keep-alive" --latency -d 60s -c 100 --timeout 10 -t 1 http://10.39.196.71:8080/ -s pipeline.lua -- 16
 Running 1m test @ http://10.39.196.71:8080/
   1 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency    18.49ms   13.93ms  52.30ms   53.33%
-    Req/Sec     1.11M    35.30k    1.15M    98.00%
+    Latency    18.44ms   13.95ms  52.12ms   53.25%
+    Req/Sec     1.10M    22.87k    1.14M    87.83%
   Latency Distribution
-     50%   18.48ms
-     75%   31.55ms
-     90%   39.38ms
+     50%   18.37ms
+     75%   31.47ms
+     90%   39.33ms
      99%    0.00us
-  66332214 requests in 1.00m, 4.76GB read
-Requests/sec: 1105525.70
-Transfer/sec:     81.18MB
+  65929433 requests in 1.00m, 4.73GB read
+Requests/sec: 1098810.79
+Transfer/sec:     80.69MB
 ```
 
 ***
 
 Without HTTP pipelining, a request rate of over 450,000 requests per second was consistently reproducible.
 
-In the 1-minute run below, a rate of 461,370 requests per second was achieved.
+In the 1-minute run below, a rate of `454,796` requests per second was achieved.
 
 * 100 concurrent connections
 * 8 wrk worker threads
@@ -203,22 +203,22 @@ No errors occurred and the 99th percentile response time was exceptional.
 
 ```
 $ date
-Tue Jul 12 16:27:45 UTC 2022
-
+Tue Jul 12 17:16:49 UTC 2022
+ 
 $ ./wrk -H "Host: 10.39.196.71:8080" -H "Accept: text/plain" -H "Connection: keep-alive" --latency -d 60s -c 100 --timeout 10 -t 8 http://10.39.196.71:8080/
 Running 1m test @ http://10.39.196.71:8080/
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency   208.97us    1.37ms 204.90ms   99.96%
-    Req/Sec    58.13k     2.82k   80.73k    97.89%
+    Latency   218.65us    1.64ms 212.93ms   99.97%
+    Req/Sec    57.15k     4.68k   69.47k    85.19%
   Latency Distribution
      50%  188.00us
-     75%  221.00us
-     90%  255.00us
-     99%  328.00us
-  27727950 requests in 1.00m, 1.99GB read
-Requests/sec: 461369.54
-Transfer/sec:     33.88MB
+     75%  229.00us
+     90%  277.00us
+     99%  372.00us
+  27332950 requests in 1.00m, 1.96GB read
+Requests/sec: 454796.26
+Transfer/sec:     33.40MB
 ```
 
 ## Concurrency
@@ -264,20 +264,20 @@ the target latency introduced on the server.
 
 ```
 $ date
-Tue Jul 12 16:12:42 UTC 2022
+Tue Jul 12 17:26:53 UTC 2022
 
 $ ./wrk -H "Host: 10.39.196.71:8080" -H "Accept: text/plain" -H "Connection: keep-alive" --latency -d 60s -c 50000 --timeout 10 -t 16 http://10.39.196.71:8080/
 Running 1m test @ http://10.39.196.71:8080/
   16 threads and 50000 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     1.00s     4.50ms   1.29s    96.48%
-    Req/Sec     8.74k    11.03k   31.55k    72.17%
+    Latency     1.00s     2.74ms   1.21s    95.44%
+    Req/Sec     8.52k    11.02k   31.56k    73.64%
   Latency Distribution
      50%    1.00s 
      75%    1.00s 
      90%    1.00s 
      99%    1.01s 
-  2403852 requests in 1.00m, 176.52MB read
-Requests/sec:  39996.59
-Transfer/sec:      2.94MB
+  2456381 requests in 1.00m, 180.38MB read
+Requests/sec:  40875.87
+Transfer/sec:      3.00MB
 ```
