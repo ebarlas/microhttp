@@ -49,7 +49,7 @@ and artifact `microhttp`.
 <dependency>
     <groupId>org.microhttp</groupId>
     <artifactId>microhttp</artifactId>
-    <version>0.7</version>
+    <version>0.8</version>
 </dependency>
 ```
 
