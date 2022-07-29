@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 /**
  * HTTP request handler.
  */
-public interface Handler {
+public interface HandlerWithMetadata {
 
     /**
      * Handle HTTP request.
@@ -16,6 +16,6 @@ public interface Handler {
      * The provided callback object has a reference to internal connection state.
      * Avoid retaining the callback for an extended period.
      */
-    void handle(Request request, Consumer<Response> callback);
+    void handle(ConnectionMetadata metadata, Request request, Consumer<Response> callback);
 
 }
