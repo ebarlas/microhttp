@@ -88,7 +88,7 @@ public class EventLoopTest {
         eventLoop = new EventLoop(
                 options,
                 logger,
-                (req, callback) -> executor.execute(() -> callback.accept(new Response(
+                (meta, req, callback) -> executor.execute(() -> callback.accept(new Response(
                         200,
                         "OK",
                         List.of(new Header("Content-Type", "text/plain")),
