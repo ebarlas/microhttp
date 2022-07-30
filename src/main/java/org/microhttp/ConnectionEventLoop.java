@@ -1,6 +1,7 @@
 package org.microhttp;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -92,17 +93,22 @@ class ConnectionEventLoop {
         final SelectionKey selectionKey;
         final ByteTokenizer byteTokenizer;
         final String id;
+        final String ip;
+        final int port;
         RequestParser requestParser;
         ByteBuffer writeBuffer;
         Cancellable requestTimeoutTask;
         boolean httpOneDotZero;
         boolean keepAlive;
 
-        private Connection(SocketChannel socketChannel, SelectionKey selectionKey) {
+        private Connection(SocketChannel socketChannel, SelectionKey selectionKey) throws IOException {
             this.socketChannel = socketChannel;
             this.selectionKey = selectionKey;
             byteTokenizer = new ByteTokenizer();
             id = Long.toString(connectionCounter.getAndIncrement());
+            InetSocketAddress isa = (InetSocketAddress) socketChannel.getRemoteAddress();
+            ip = isa.getHostString();
+            port = isa.getPort();
             requestParser = new RequestParser(byteTokenizer);
             requestTimeoutTask = timeoutQueue.schedule(this::onRequestTimeout, options.requestTimeout());
         }
@@ -184,7 +190,7 @@ class ConnectionEventLoop {
             keepAlive = request.hasHeader(HEADER_CONNECTION, KEEP_ALIVE);
             byteTokenizer.compact();
             requestParser = new RequestParser(byteTokenizer);
-            handler.handle(request, this::onResponse);
+            handler.handle(new ConnectionMetadata(id, ip, port), request, this::onResponse);
         }
 
         private void onResponse(Response response) {
@@ -379,7 +385,8 @@ class ConnectionEventLoop {
         if (logger.enabled()) {
             logger.log(
                     new LogEntry("event", "accept"),
-                    new LogEntry("remote_address", socketChannel.getRemoteAddress().toString()),
+                    new LogEntry("ip", connection.ip),
+                    new LogEntry("port", Integer.toString(connection.port)),
                     new LogEntry("id", connection.id));
         }
     }
