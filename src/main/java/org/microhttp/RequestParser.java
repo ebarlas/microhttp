@@ -54,6 +54,10 @@ class RequestParser {
         this.tokenizer = tokenizer;
     }
 
+    boolean headerParsed() {
+        return state.ordinal() > State.HEADER.ordinal();
+    }
+
     boolean parse() {
         while (state != State.DONE) {
             byte[] token = state.tokenSupplier.apply(this);

@@ -75,7 +75,7 @@ class ConnectionEventLoop {
 
         timeoutQueue = new Scheduler();
         taskQueue = new ConcurrentLinkedQueue<>();
-        buffer = ByteBuffer.allocateDirect(options.readBufferSize());
+        buffer = ByteBuffer.allocateDirect(options.bufferSize());
         selector = Selector.open();
         thread = new Thread(this::run, "connection-event-loop");
     }
@@ -165,7 +165,15 @@ class ConnectionEventLoop {
                 }
                 onParseRequest();
             } else {
-                if (byteTokenizer.size() > options.maxRequestSize()) {
+                if (!requestParser.headerParsed() && byteTokenizer.size() > options.maxHeaderSize()) {
+                    if (logger.enabled()) {
+                        logger.log(
+                                new LogEntry("event", "exceed_header_max_close"),
+                                new LogEntry("id", id),
+                                new LogEntry("request_size", Integer.toString(byteTokenizer.size())));
+                    }
+                    failSafeClose();
+                } else if (byteTokenizer.size() > options.maxRequestSize()) {
                     if (logger.enabled()) {
                         logger.log(
                                 new LogEntry("event", "exceed_request_max_close"),

@@ -83,7 +83,8 @@ public class EventLoopTest {
         Options options = new Options()
                 .withPort(0)
                 .withRequestTimeout(Duration.ofMillis(2_500))
-                .withReadBufferSize(1_024)
+                .withBufferSize(1_024)
+                .withMaxHeaderSize(512)
                 .withMaxRequestSize(2_048);
         eventLoop = new EventLoop(
                 options,
@@ -180,15 +181,37 @@ public class EventLoopTest {
     @Test
     void requestTooLarge() throws IOException {
         int length = 3_072;
-        char[] arr = new char[length];
-        Arrays.fill(arr, 'x');
         String request = """
                 POST /file HTTP/1.0\r
                 Content-Length: %d\r
                 \r
                 %s
-                """.formatted(length, new String(arr));
+                """.formatted(length, makeString(length));
         outputStream.write(request.getBytes());
+        expectEof(inputStream);
+        Assertions.assertTrue(logger.hasEventLog("exceed_request_max_close"));
+    }
+
+    @Test
+    void requestHeaderTooLarge() throws IOException {
+        int length = 1_024;
+        String request = """
+                GET /file HTTP/1.0\r
+                Authorization: %s\r
+                \r
+                """.formatted(makeString(length));
+        outputStream.write(request.getBytes());
+        expectEof(inputStream);
+        Assertions.assertTrue(logger.hasEventLog("exceed_header_max_close"));
+    }
+
+    private static String makeString(int length) {
+        char[] arr = new char[length];
+        Arrays.fill(arr, 'x');
+        return new String(arr);
+    }
+
+    private static void expectEof(InputStream inputStream) throws IOException {
         try {
             // read processed prior to receipt of RST packet
             int data = inputStream.read();
@@ -197,7 +220,6 @@ public class EventLoopTest {
             // read processed after receipt of RST packet
             Assertions.assertTrue(e.getMessage().contains("reset"));
         }
-        Assertions.assertTrue(logger.hasEventLog("exceed_request_max_close"));
     }
 
     static class TestLogger implements Logger {
