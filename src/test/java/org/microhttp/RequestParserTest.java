@@ -95,7 +95,7 @@ public class RequestParserTest {
 
     static final byte[] INVALID_HEADER_VALUE = """
             GET /file HTTP/1.1\r
-            Name: \r
+            Name\r
             \r
             """.getBytes();
 
