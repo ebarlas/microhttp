@@ -27,6 +27,24 @@ public class RequestParserTest {
                     new Header("Accept", "*/*")),
             null);
 
+    static final byte[] GET_BYTES_EMPTY_HEADER_VAL = """
+            GET /file HTTP/1.1\r
+            Host: 127.0.0.1:9000\r
+            Accept: */*\r
+            Thingy: \r
+            \r
+            """.getBytes();
+
+    static final Request GET_REQUEST_EMPTY_HEADER_VAL = new Request(
+            "GET",
+            "/file",
+            "HTTP/1.1",
+            List.of(
+                    new Header("Host", "127.0.0.1:9000"),
+                    new Header("Accept", "*/*"),
+                    new Header("Thingy", "")),
+            null);
+
     static final byte[] POST_BYTES = """
             POST /file HTTP/1.1\r
             Host: 127.0.0.1:9000\r
@@ -127,6 +145,7 @@ public class RequestParserTest {
     static Stream<Arguments> requestArgsProvider() {
         return Stream.of(
                 Arguments.arguments(GET_BYTES, GET_REQUEST),
+                Arguments.arguments(GET_BYTES_EMPTY_HEADER_VAL, GET_REQUEST_EMPTY_HEADER_VAL),
                 Arguments.arguments(POST_BYTES, POST_REQUEST),
                 Arguments.arguments(CHUNKED_POST_BYTES, CHUNKED_POST_REQUEST));
     }
