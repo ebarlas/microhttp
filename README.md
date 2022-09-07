@@ -1,16 +1,17 @@
 # Microhttp
 
 Microhttp is a fast, scalable, event-driven, self-contained Java web server that is small enough for a programmer to understand 
-and reason about.
+and reason about. It does not rely on any classpath dependencies or native code.
 
 Comprehensibility is the highest priority. This library is intended to be an alternative to commonly used 
-frameworks with overwhelming complexity. 
-Implementation decisions aim to strike a balance between simplicity and efficiency.
+frameworks with overwhelming complexity.
 
 Microhttp discretizes all requests and responses. Streaming is not supported. 
-This aligns well with transactional web services that exchange small payloads. 
-Limiting request body size has the added benefit of overflow protection. 
-This is frequently overlooked in web services that consume request bodies in a stream-oriented fashion.
+This aligns well with transactional web services that exchange small payloads.
+
+Microhttp supports aspects of HTTP 1.0 and HTTP 1.1, but it is _not_ fully compliant with the spec
+([RFC 2616](https://datatracker.ietf.org/doc/html/rfc2616), [RFC 7230](https://datatracker.ietf.org/doc/html/rfc7230), etc.)
+`100-Continue` ([RFC 2616 8.2.3](https://datatracker.ietf.org/doc/html/rfc2616#section-8.2.3)) is not implemented, for example.
 
 TLS is not supported. Edge proxies and load balancers provide this capability. 
 The last hop to Microhttp typically does not require TLS.
@@ -34,11 +35,11 @@ Includes:
 * Persistent connections
 * Pipelining
 
-Excludes:
-* HTTP 2
-* Range requests
-* Caching
-* Compression
+Intended Use:
+* Teaching or learning scalable concurrency, NIO, HTTP, networking
+* Mock or stub servers for testing
+* Internal web servers not exposed to the internet
+* Web server behind an internet-facing reverse proxy (Nginx, HAProxy, AWS ELB, etc)
 
 # Dependency
 
