@@ -4,7 +4,7 @@ Microhttp is a fast, scalable, event-driven, self-contained Java web server that
 and reason about. It does not rely on any classpath dependencies or native code.
 
 It is capable of serving over 1,000,000 requests per second on a commodity EC2 host (c5.2xlarge).
-[TechEmpower](https://www.techempower.com/benchmarks/) continuous benchmarking results consistent show Microhttp
+[TechEmpower](https://www.techempower.com/benchmarks/) continuous benchmarking results consistently show Microhttp
 achieves over 2,000,000 requests per second. 
 
 Comprehensibility is the highest priority. This library is intended to be an alternative to commonly used 
