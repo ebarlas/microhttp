@@ -23,6 +23,9 @@ The last hop to Microhttp typically does not require TLS.
 HTTP 2 is not supported for a similar reason. 
 Edge proxies can support HTTP 2 while using HTTP 1.1 on the last hop to Microhttp.
 
+Microhttp is 100% compatible with [Project Loom](https://openjdk.org/projects/loom/) [virtual threads](https://openjdk.org/jeps/425).
+Simply handle each request in a separate virtual thread, invoking the callback function upon completion.
+
 Principles:
 * No dependencies
 * Small, targeted codebase (~500 LOC)
