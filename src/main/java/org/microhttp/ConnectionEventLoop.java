@@ -248,17 +248,14 @@ class ConnectionEventLoop {
             }
         }
 
-        private void transferToDirectBufferForWrite() {
+        private int doWrite() throws IOException {
             buffer.clear(); // pos = 0, limit = capacity
             int amount = Math.min(buffer.remaining(), writeBuffer.remaining()); // determine transfer quantity
             buffer.put(writeBuffer.array(), writeBuffer.position(), amount); // do transfer
             buffer.flip();
-            writeBuffer.position(writeBuffer.position() + amount); // advance write buffer
-        }
-
-        private int doWrite() throws IOException {
-            transferToDirectBufferForWrite();
-            return socketChannel.write(buffer);
+            int written = socketChannel.write(buffer);
+            writeBuffer.position(writeBuffer.position() + written); // advance write buffer
+            return written;
         }
 
         private void doOnWritable() throws IOException {

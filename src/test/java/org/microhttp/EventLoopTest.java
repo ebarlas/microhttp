@@ -14,22 +14,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
-import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class EventLoopTest {
 
+    static TestServer server;
     static TestLogger logger;
-    static ExecutorService executor;
-    static int port;
-    static EventLoop eventLoop;
+    static String responseBody;
 
     static final String HTTP10_REQUEST = """
             GET /file HTTP/1.0\r
@@ -74,41 +67,22 @@ public class EventLoopTest {
     InputStream inputStream;
     OutputStream outputStream;
 
-    static volatile String responseBody;
-
     @BeforeAll
     static void beforeAll() throws IOException {
-        logger = new TestLogger();
-        executor = Executors.newFixedThreadPool(1);
-        Options options = new Options()
-                .withPort(0)
-                .withRequestTimeout(Duration.ofMillis(2_500))
-                .withReadBufferSize(1_024)
-                .withMaxRequestSize(2_048);
-        eventLoop = new EventLoop(
-                options,
-                logger,
-                (meta, req, callback) -> executor.execute(() -> callback.accept(new Response(
-                        200,
-                        "OK",
-                        List.of(new Header("Content-Type", "text/plain")),
-                        responseBody.getBytes()))));
-        eventLoop.start();
-        port = eventLoop.getPort();
+        server = new TestServer();
+        logger = server.logger();
+        responseBody = server.response();
     }
 
     @AfterAll
     static void afterAll() throws InterruptedException {
-        eventLoop.stop();
-        eventLoop.join();
-        executor.shutdown();
+        server.stop();
     }
 
     @BeforeEach
     void beforeEach() throws IOException {
-        responseBody = "hello world\n";
         logger.clear();
-        socket = new Socket("localhost", port);
+        socket = new Socket("localhost", server.port());
         socket.setSoTimeout(5_000);
         inputStream = socket.getInputStream();
         outputStream = socket.getOutputStream();
@@ -121,16 +95,6 @@ public class EventLoopTest {
 
     @Test
     void http10RequestNonPersistent() throws IOException {
-        outputStream.write(HTTP10_REQUEST.getBytes());
-        byte[] received = inputStream.readAllBytes();
-        Assertions.assertArrayEquals(HTTP10_RESPONSE.formatted(responseBody.length(), responseBody).getBytes(), received);
-        Assertions.assertTrue(logger.hasEventLog("close_after_response"));
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = {100_000, 1_000_000, 10_000_000})
-    void largeResponsePayloads(int size) throws IOException {
-        responseBody = IntStream.range(0, size).mapToObj(n -> "x").collect(Collectors.joining());
         outputStream.write(HTTP10_REQUEST.getBytes());
         byte[] received = inputStream.readAllBytes();
         Assertions.assertArrayEquals(HTTP10_RESPONSE.formatted(responseBody.length(), responseBody).getBytes(), received);
@@ -199,44 +163,4 @@ public class EventLoopTest {
         }
         Assertions.assertTrue(logger.hasEventLog("exceed_request_max_close"));
     }
-
-    static class TestLogger implements Logger {
-        final List<List<LogEntry>> events = new ArrayList<>();
-
-        synchronized boolean hasEventLog(String value) {
-            return hasLog(ents -> ents.stream().anyMatch(e -> e.key().equals("event") && e.value().equals(value)));
-        }
-
-        synchronized long countEventLogs(String value) {
-            return countLogs(ents -> ents.stream().anyMatch(e -> e.key().equals("event") && e.value().equals(value)));
-        }
-
-        synchronized boolean hasLog(Predicate<List<LogEntry>> predicate) {
-            return events.stream().anyMatch(predicate);
-        }
-
-        synchronized long countLogs(Predicate<List<LogEntry>> predicate) {
-            return events.stream().filter(predicate).count();
-        }
-
-        synchronized void clear() {
-            events.clear();
-        }
-
-        @Override
-        public synchronized boolean enabled() {
-            return true;
-        }
-
-        @Override
-        public synchronized void log(LogEntry... entries) {
-            events.add(List.of(entries));
-        }
-
-        @Override
-        public synchronized void log(Exception e, LogEntry... entries) {
-            log(entries);
-        }
-    }
-
 }
