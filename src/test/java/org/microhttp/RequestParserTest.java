@@ -142,7 +142,7 @@ public class RequestParserTest {
             \r
             """.getBytes();
 
-    static Stream<Arguments> requestArgsProvider() {
+    public static Stream<Arguments> requestArgsProvider() {
         return Stream.of(
                 Arguments.arguments(GET_BYTES, GET_REQUEST),
                 Arguments.arguments(GET_BYTES_EMPTY_HEADER_VAL, GET_REQUEST_EMPTY_HEADER_VAL),
@@ -150,7 +150,7 @@ public class RequestParserTest {
                 Arguments.arguments(CHUNKED_POST_BYTES, CHUNKED_POST_REQUEST));
     }
 
-    static Stream<byte[]> invalidRequestArgsProvider() {
+    public static Stream<byte[]> invalidRequestArgsProvider() {
         return Stream.of(
                 INVALID_CONTENT_LENGTH,
                 INVALID_HEADER,
@@ -162,7 +162,7 @@ public class RequestParserTest {
 
     @ParameterizedTest
     @MethodSource("requestArgsProvider")
-    void completeRequests(byte[] requestToParse, Request expectedResult) {
+    public void completeRequests(byte[] requestToParse, Request expectedResult) {
         ByteTokenizer tokenizer = new ByteTokenizer();
         tokenizer.add(ByteBuffer.wrap(requestToParse));
         RequestParser parser = new RequestParser(tokenizer);
@@ -172,7 +172,7 @@ public class RequestParserTest {
 
     @ParameterizedTest
     @MethodSource("requestArgsProvider")
-    void partialRequests(byte[] requestToParse, Request expectedResult) {
+    public void partialRequests(byte[] requestToParse, Request expectedResult) {
         ByteTokenizer tokenizer = new ByteTokenizer();
         RequestParser parser = new RequestParser(tokenizer);
         for (int i = 0; i < requestToParse.length - 1; i++) {
@@ -186,7 +186,7 @@ public class RequestParserTest {
 
     @ParameterizedTest
     @MethodSource("invalidRequestArgsProvider")
-    void invalidRequests(byte[] requestToParse) {
+    public void invalidRequests(byte[] requestToParse) {
         ByteTokenizer tokenizer = new ByteTokenizer();
         RequestParser parser = new RequestParser(tokenizer);
         tokenizer.add(ByteBuffer.wrap(requestToParse));

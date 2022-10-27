@@ -48,14 +48,14 @@ public class EventLoopLargeResponseTest {
     }
 
     @AfterEach
-    void afterEach() throws IOException, InterruptedException {
+    public void afterEach() throws IOException, InterruptedException {
         socket.close();
         server.stop();
     }
 
     @ParameterizedTest
     @MethodSource("argsProvider")
-    void largeResponsePayloads(boolean handleInline, int readBufferSize, int size) throws IOException {
+    public void largeResponsePayloads(boolean handleInline, int readBufferSize, int size) throws IOException {
         start(handleInline, readBufferSize, IntStream.range(0, size).mapToObj(n -> "x").collect(Collectors.joining()));
         outputStream.write(REQUEST.getBytes());
         byte[] received = inputStream.readAllBytes();
@@ -63,7 +63,7 @@ public class EventLoopLargeResponseTest {
         Assertions.assertTrue(logger.hasEventLog("close_after_response"));
     }
 
-    static Stream<Arguments> argsProvider() {
+    public static Stream<Arguments> argsProvider() {
         boolean[] handleInline = {true, false};
         int[] readBufferSize = {1_024, 1_024 * 1_024};
         int[] responseSize = {10_000, 100_000, 1_000_000};

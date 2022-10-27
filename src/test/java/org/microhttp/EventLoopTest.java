@@ -68,19 +68,19 @@ public class EventLoopTest {
     OutputStream outputStream;
 
     @BeforeAll
-    static void beforeAll() throws IOException {
+    public static void beforeAll() throws IOException {
         server = new TestServer();
         logger = server.logger();
         responseBody = server.response();
     }
 
     @AfterAll
-    static void afterAll() throws InterruptedException {
+    public static void afterAll() throws InterruptedException {
         server.stop();
     }
 
     @BeforeEach
-    void beforeEach() throws IOException {
+    public void beforeEach() throws IOException {
         logger.clear();
         socket = new Socket("localhost", server.port());
         socket.setSoTimeout(5_000);
@@ -89,12 +89,12 @@ public class EventLoopTest {
     }
 
     @AfterEach
-    void afterEach() throws IOException {
+    public void afterEach() throws IOException {
         socket.close();
     }
 
     @Test
-    void http10RequestNonPersistent() throws IOException {
+    public void http10RequestNonPersistent() throws IOException {
         outputStream.write(HTTP10_REQUEST.getBytes());
         byte[] received = inputStream.readAllBytes();
         Assertions.assertArrayEquals(HTTP10_RESPONSE.formatted(responseBody.length(), responseBody).getBytes(), received);
@@ -103,7 +103,7 @@ public class EventLoopTest {
 
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 3, 4, 5})
-    void http10RequestPersistent(int numRequests) throws IOException {
+    public void http10RequestPersistent(int numRequests) throws IOException {
         for (int i = 0; i < numRequests; i++) {
             outputStream.write(HTTP10_KEEP_ALIVE_REQUEST.getBytes());
             byte[] received = inputStream.readNBytes(HTTP10_KEEP_ALIVE_RESPONSE.length());
@@ -112,7 +112,7 @@ public class EventLoopTest {
     }
 
     @Test
-    void http11Request() throws IOException {
+    public void http11Request() throws IOException {
         outputStream.write(HTTP11_REQUEST.getBytes());
         socket.shutdownOutput();
         byte[] received = inputStream.readAllBytes();
@@ -122,7 +122,7 @@ public class EventLoopTest {
 
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 3, 4, 5})
-    void http11RequestsPipelined(int numRequests) throws IOException {
+    public void http11RequestsPipelined(int numRequests) throws IOException {
         String request = IntStream.range(0, numRequests).mapToObj(n -> HTTP11_REQUEST).collect(Collectors.joining());
         outputStream.write(request.getBytes());
         socket.shutdownOutput();
@@ -135,14 +135,14 @@ public class EventLoopTest {
     }
 
     @Test
-    void timeoutOnServer() throws IOException {
+    public void timeoutOnServer() throws IOException {
         int data = inputStream.read();
         Assertions.assertEquals(-1, data);
         Assertions.assertTrue(logger.hasEventLog("request_timeout"));
     }
 
     @Test
-    void requestTooLarge() throws IOException {
+    public void requestTooLarge() throws IOException {
         int length = 3_072;
         char[] arr = new char[length];
         Arrays.fill(arr, 'x');

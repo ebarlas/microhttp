@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 class ByteMergerTest {
 
     @Test
-    void addAndMerge() {
+    public void addAndMerge() {
         ByteMerger merger = new ByteMerger();
         Assertions.assertArrayEquals(new byte[0], merger.merge());
         merger.add("hello".getBytes());

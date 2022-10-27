@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
-class ByteTokenizerTest {
+public class ByteTokenizerTest {
 
     @Test
-    void compact() {
+    public void compact() {
         ByteTokenizer tokenizer = new ByteTokenizer();
         tokenizer.add(ByteBuffer.wrap("hello world".getBytes()));
         Assertions.assertArrayEquals("hello".getBytes(), tokenizer.next(" ".getBytes()));
@@ -24,7 +24,7 @@ class ByteTokenizerTest {
     }
 
     @Test
-    void expandingArray() {
+    public void expandingArray() {
         ByteTokenizer tokenizer = new ByteTokenizer();
         Assertions.assertEquals(0, tokenizer.remaining());
         Assertions.assertEquals(0, tokenizer.size());
@@ -43,7 +43,7 @@ class ByteTokenizerTest {
     }
 
     @Test
-    void noBytes() {
+    public void noBytes() {
         ByteTokenizer tokenizer = new ByteTokenizer();
         Assertions.assertEquals(0, tokenizer.remaining());
         Assertions.assertNull(tokenizer.next(1));
@@ -51,7 +51,7 @@ class ByteTokenizerTest {
     }
 
     @Test
-    void nextWithLength() {
+    public void nextWithLength() {
         ByteTokenizer tokenizer = new ByteTokenizer();
         tokenizer.add(ByteBuffer.wrap("hello".getBytes()));
         Assertions.assertArrayEquals("h".getBytes(), tokenizer.next(1));
@@ -60,7 +60,7 @@ class ByteTokenizerTest {
     }
 
     @Test
-    void nextWithDelimiter() {
+    public void nextWithDelimiter() {
         ByteTokenizer tokenizer = new ByteTokenizer();
         tokenizer.add(ByteBuffer.wrap("hello".getBytes()));
         tokenizer.add(ByteBuffer.wrap(" ".getBytes()));

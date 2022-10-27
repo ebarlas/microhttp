@@ -29,7 +29,7 @@ public class EventLoopConcurrencyTest {
     static EventLoop eventLoop;
 
     @BeforeAll
-    static void beforeAll() throws IOException {
+    public static void beforeAll() throws IOException {
         executor = Executors.newFixedThreadPool(1);
         Options options = new Options()
                 .withPort(0)
@@ -50,7 +50,7 @@ public class EventLoopConcurrencyTest {
     }
 
     @AfterAll
-    static void afterAll() throws InterruptedException {
+    public static void afterAll() throws InterruptedException {
         eventLoop.stop();
         eventLoop.join();
         executor.shutdown();
@@ -58,7 +58,7 @@ public class EventLoopConcurrencyTest {
 
     @ParameterizedTest
     @MethodSource("argsProvider")
-    void concurrentRequests(int concurrency, int requestCount) throws InterruptedException, ExecutionException {
+    public void concurrentRequests(int concurrency, int requestCount) throws InterruptedException, ExecutionException {
         Semaphore semaphore = new Semaphore(concurrency);
         HttpClient client = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
@@ -85,7 +85,7 @@ public class EventLoopConcurrencyTest {
         }
     }
 
-    static Stream<Arguments> argsProvider() {
+    public static Stream<Arguments> argsProvider() {
         return Stream.of(
                 Arguments.arguments(1, 10),
                 Arguments.arguments(10, 100),

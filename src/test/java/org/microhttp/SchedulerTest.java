@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.List;
 
-class SchedulerTest {
+public class SchedulerTest {
 
     @Test
-    void scheduleAndTakeExpired() {
+    public void scheduleAndTakeExpired() {
         TestClock clock = new TestClock();
         Scheduler scheduler = new Scheduler(clock);
         Runnable first = () -> {};
@@ -26,7 +26,7 @@ class SchedulerTest {
     }
 
     @Test
-    void cancelAndReschedule() {
+    public void cancelAndReschedule() {
         TestClock clock = new TestClock();
         Scheduler scheduler = new Scheduler(clock);
         Runnable first = () -> {};
