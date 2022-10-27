@@ -1,12 +1,11 @@
 package org.microhttp;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
+import java.time.Duration;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DebugLogger implements Logger {
-    private final RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+    private final long epoch = System.nanoTime();
 
     @Override
     public boolean enabled() {
@@ -15,7 +14,7 @@ public class DebugLogger implements Logger {
 
     @Override
     public void log(LogEntry... entries) {
-        long uptime = runtimeMXBean.getUptime();
+        long uptime = Duration.ofNanos(System.nanoTime() - epoch).toMillis();
         String text = Stream.of(entries)
                 .map(e -> e.key() + "=" + e.value())
                 .collect(Collectors.joining(", ", "[" + uptime + "] ", ""));
