@@ -29,8 +29,8 @@ public class TestServer {
                 List.of(new Header("Content-Type", "text/plain")),
                 response.getBytes()));
         Handler h = handleInline
-                ? (meta, req, callback) -> c.accept(callback)
-                : (meta, req, callback) -> executor.execute(() -> c.accept(callback));
+                ? (req, callback) -> c.accept(callback)
+                : (req, callback) -> executor.execute(() -> c.accept(callback));
         Options options = new Options()
                 .withPort(0)
                 .withRequestTimeout(Duration.ofMillis(2_500))

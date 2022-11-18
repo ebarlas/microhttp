@@ -36,7 +36,7 @@ public class EventLoopConcurrencyTest {
                 .withRequestTimeout(Duration.ofMillis(2_500))
                 .withReadBufferSize(1_024)
                 .withMaxRequestSize(2_048);
-        Handler handler = (meta, req, callback) -> executor.execute(() -> {
+        Handler handler = (req, callback) -> executor.execute(() -> {
             Response response = new Response(
                     200,
                     "OK",
