@@ -30,7 +30,7 @@ public class EventLoop {
     private final Thread thread;
 
     public EventLoop(Handler handler) throws IOException {
-        this(Options.OptionsBuilder.getDefaultInstance(), handler);
+        this(OptionsBuilder.newBuilder().build(), handler);
     }
 
     public EventLoop(Options options, Handler handler) throws IOException {

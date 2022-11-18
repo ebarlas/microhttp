@@ -31,7 +31,7 @@ public class TestServer {
         Handler h = handleInline
                 ? (req, callback) -> c.accept(callback)
                 : (req, callback) -> executor.execute(() -> c.accept(callback));
-        Options options = Options.OptionsBuilder.newBuilder()
+        Options options = OptionsBuilder.newBuilder()
                 .withPort(0)
                 .withRequestTimeout(Duration.ofMillis(2_500))
                 .withReadBufferSize(readBufferSize)
