@@ -4,16 +4,118 @@ import java.time.Duration;
 
 public class Options {
 
-    private String host = "localhost";
-    private int port = 8080;
-    private boolean reuseAddr = false;
-    private boolean reusePort = false;
-    private Duration resolution = Duration.ofMillis(100);
-    private Duration requestTimeout = Duration.ofSeconds(60);
-    private int readBufferSize = 1_024 * 64;
-    private int acceptLength = 0;
-    private int maxRequestSize = 1_024 * 1_024;
-    private int concurrency = Runtime.getRuntime().availableProcessors();
+    private final String host;
+    private final int port;
+    private final boolean reuseAddr;
+    private final boolean reusePort;
+    private final Duration resolution;
+    private final Duration requestTimeout;
+    private final int readBufferSize;
+    private final int acceptLength;
+    private final int maxRequestSize;
+    private final int concurrency;
+
+    private Options(OptionsBuilder builder) {
+        this.host = builder.host;
+        this.port = builder.port;
+        this.reuseAddr = builder.reuseAddr;
+        this.reusePort = builder.reusePort;
+        this.resolution = builder.resolution;
+        this.requestTimeout = builder.requestTimeout;
+        this.readBufferSize = builder.readBufferSize;
+        this.acceptLength = builder.acceptLength;
+        this.maxRequestSize = builder.maxRequestSize;
+        this.concurrency = builder.concurrency;
+    }
+
+    public static class OptionsBuilder {
+
+        private String host;
+        private int port;
+        private boolean reuseAddr;
+        private boolean reusePort;
+        private Duration resolution;
+        private Duration requestTimeout;
+        private int readBufferSize;
+        private int acceptLength;
+        private int maxRequestSize;
+        private int concurrency;
+
+        private OptionsBuilder() {
+            this.host = "localhost";
+            this.port = 8080;
+            this.reuseAddr = false;
+            this.reusePort = false;
+            this.resolution = Duration.ofMillis(100);
+            this.requestTimeout = Duration.ofSeconds(60);
+            this.readBufferSize = 1_024 * 64;
+            this. acceptLength = 0;
+            this.maxRequestSize = 1_024 * 1_024;
+            this.concurrency = Runtime.getRuntime().availableProcessors();
+        }
+
+        public static OptionsBuilder newBuilder() {
+            return new OptionsBuilder();
+        }
+
+        public static Options getDefaultInstance() {
+            return new Options(new OptionsBuilder());
+        }
+
+        public Options build() {
+            return new Options(this);
+        }
+
+        public OptionsBuilder withHost(String host) {
+            this.host = host;
+            return this;
+        }
+
+        public OptionsBuilder withPort(int port) {
+            this.port = port;
+            return this;
+        }
+
+        public OptionsBuilder withReuseAddr(boolean reuseAddr) {
+            this.reuseAddr = reuseAddr;
+            return this;
+        }
+
+        public OptionsBuilder withReusePort(boolean reusePort) {
+            this.reusePort = reusePort;
+            return this;
+        }
+
+        public OptionsBuilder withResolution(Duration resolution) {
+            this.resolution = resolution;
+            return this;
+        }
+
+        public OptionsBuilder withRequestTimeout(Duration requestTimeout) {
+            this.requestTimeout = requestTimeout;
+            return this;
+        }
+
+        public OptionsBuilder withReadBufferSize(int readBufferSize) {
+            this.readBufferSize = readBufferSize;
+            return this;
+        }
+
+        public OptionsBuilder withAcceptLength(int acceptLength) {
+            this.acceptLength = acceptLength;
+            return this;
+        }
+
+        public OptionsBuilder withMaxRequestSize(int maxRequestSize) {
+            this.maxRequestSize = maxRequestSize;
+            return this;
+        }
+
+        public OptionsBuilder withConcurrency(int concurrency) {
+            this.concurrency = concurrency;
+            return this;
+        }
+    }
 
     public String host() {
         return host;
@@ -53,55 +155,5 @@ public class Options {
 
     public int concurrency() {
         return concurrency;
-    }
-
-    public Options withHost(String host) {
-        this.host = host;
-        return this;
-    }
-
-    public Options withPort(int port) {
-        this.port = port;
-        return this;
-    }
-
-    public Options withReuseAddr(boolean reuseAddr) {
-        this.reuseAddr = reuseAddr;
-        return this;
-    }
-
-    public Options withReusePort(boolean reusePort) {
-        this.reusePort = reusePort;
-        return this;
-    }
-
-    public Options withResolution(Duration resolution) {
-        this.resolution = resolution;
-        return this;
-    }
-
-    public Options withRequestTimeout(Duration requestTimeout) {
-        this.requestTimeout = requestTimeout;
-        return this;
-    }
-
-    public Options withReadBufferSize(int readBufferSize) {
-        this.readBufferSize = readBufferSize;
-        return this;
-    }
-
-    public Options withAcceptLength(int acceptLength) {
-        this.acceptLength = acceptLength;
-        return this;
-    }
-
-    public Options withMaxRequestSize(int maxRequestSize) {
-        this.maxRequestSize = maxRequestSize;
-        return this;
-    }
-
-    public Options withConcurrency(int concurrency) {
-        this.concurrency = concurrency;
-        return this;
     }
 }

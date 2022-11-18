@@ -31,11 +31,12 @@ public class TestServer {
         Handler h = handleInline
                 ? (req, callback) -> c.accept(callback)
                 : (req, callback) -> executor.execute(() -> c.accept(callback));
-        Options options = new Options()
+        Options options = Options.OptionsBuilder.newBuilder()
                 .withPort(0)
                 .withRequestTimeout(Duration.ofMillis(2_500))
                 .withReadBufferSize(readBufferSize)
-                .withMaxRequestSize(2_048);
+                .withMaxRequestSize(2_048)
+                .build();
         eventLoop = new EventLoop(options, logger, h);
         eventLoop.start();
         port = eventLoop.getPort();
