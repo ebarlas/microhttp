@@ -92,7 +92,7 @@ Response response = new Response(
         "OK",
         List.of(new Header("Content-Type", "text/plain")),
         "hello world\n".getBytes());
-Options options = new Options()
+Options options = OptionsBuilder.newBuilder()
         .withHost("localhost")
         .withPort(8080)
         .withRequestTimeout(Duration.ofSeconds(60))
@@ -100,7 +100,8 @@ Options options = new Options()
         .withBufferSize(1_024 * 64)
         .withMaxRequestSize(1_024 * 1_024)
         .withAcceptLength(0)
-        .withConcurrency(4);
+        .withConcurrency(4)
+        .build();
 Logger logger = new DebugLogger();
 Handler handler = (req, callback) -> callback.accept(response);
 EventLoop eventLoop = new EventLoop(options, logger, handler);
