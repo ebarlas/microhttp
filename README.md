@@ -92,7 +92,7 @@ Response response = new Response(
         "OK",
         List.of(new Header("Content-Type", "text/plain")),
         "hello world\n".getBytes());
-Options options = OptionsBuilder.newBuilder()
+Options options = Options.builder()
         .withHost("localhost")
         .withPort(8080)
         .withRequestTimeout(Duration.ofSeconds(60))
