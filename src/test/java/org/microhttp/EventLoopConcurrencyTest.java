@@ -31,7 +31,7 @@ public class EventLoopConcurrencyTest {
     @BeforeAll
     public static void beforeAll() throws IOException {
         executor = Executors.newFixedThreadPool(1);
-        Options options = OptionsBuilder.newBuilder()
+        Options options = Options.builder()
                 .withPort(0)
                 .withRequestTimeout(Duration.ofMillis(2_500))
                 .withReadBufferSize(1_024)
