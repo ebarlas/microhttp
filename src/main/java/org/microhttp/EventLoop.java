@@ -1,5 +1,7 @@
 package org.microhttp;
 
+import static org.microhttp.CloseUtils.closeQuietly;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
@@ -85,6 +87,9 @@ public class EventLoop {
                 logger.log(e, new LogEntry("event", "event_loop_terminate"));
             }
             stop.set(true); // stop the world on critical error
+        } finally {
+            closeQuietly(selector);
+            closeQuietly(serverSocketChannel);
         }
     }
 
