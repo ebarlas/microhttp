@@ -20,4 +20,8 @@ public interface Logger {
      */
     void log(Exception e, LogEntry... entries);
 
+    static Logger noop() {
+        return NoopLogger.INSTANCE;
+    }
+
 }
