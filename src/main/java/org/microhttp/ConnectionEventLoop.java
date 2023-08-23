@@ -1,5 +1,7 @@
 package org.microhttp;
 
+import static org.microhttp.CloseUtils.closeQuietly;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -297,15 +299,11 @@ class ConnectionEventLoop {
         }
 
         private void failSafeClose() {
-            try {
-                if (requestTimeoutTask != null) {
-                    requestTimeoutTask.cancel();
-                }
-                selectionKey.cancel();
-                socketChannel.close();
-            } catch (IOException e) {
-                // suppress error
+            if (requestTimeoutTask != null) {
+                requestTimeoutTask.cancel();
             }
+            selectionKey.cancel();
+            closeQuietly(socketChannel);
         }
     }
 
@@ -329,6 +327,14 @@ class ConnectionEventLoop {
                 logger.log(e, new LogEntry("event", "sub_event_loop_terminate"));
             }
             stop.set(true); // stop the world on critical error
+        } finally {
+            for (SelectionKey selKey : selector.keys()) {
+                Object attachment = selKey.attachment();
+                if (attachment instanceof Connection connection) {
+                    connection.failSafeClose();
+                }
+            }
+            closeQuietly(selector);
         }
     }
 
@@ -360,9 +366,7 @@ class ConnectionEventLoop {
                 doRegister(socketChannel);
             } catch (IOException e) {
                 logger.log(e, new LogEntry("event", "register_error"));
-                try {
-                    socketChannel.close();
-                } catch (IOException ignore) {}
+                closeQuietly(socketChannel);
             }
         });
         selector.wakeup(); // wakeup event loop thread to process task immediately
