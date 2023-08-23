@@ -9,8 +9,8 @@ public class LoggerTest {
 
     @Test
     public void noopLogger() {
-        Logger logger = Logger.noop();
+        Logger logger = NoopLogger.instance();
         assertFalse(logger.enabled());
-        assertSame(NoopLogger.INSTANCE, logger);
+        assertSame(NoopLogger.instance(), logger);
     }
 }

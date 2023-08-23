@@ -2,6 +2,8 @@ package org.microhttp;
 
 /**
  * Simple logging abstraction that operates on {@link LogEntry} instances.
+ *
+ * @see NoopLogger for using a logger that is not enabled
  */
 public interface Logger {
 
@@ -19,9 +21,5 @@ public interface Logger {
      * Creates a new log event consisting of an exception and multiple log entries.
      */
     void log(Exception e, LogEntry... entries);
-
-    static Logger noop() {
-        return NoopLogger.INSTANCE;
-    }
 
 }

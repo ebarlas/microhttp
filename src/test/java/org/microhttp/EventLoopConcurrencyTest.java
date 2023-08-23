@@ -45,7 +45,7 @@ public class EventLoopConcurrencyTest {
                     req.body());
             callback.accept(response);
         });
-        eventLoop = new EventLoop(options, new DisabledLogger(), handler);
+        eventLoop = new EventLoop(options, NoopLogger.instance(), handler);
         eventLoop.start();
         port = eventLoop.getPort();
     }
@@ -91,23 +91,6 @@ public class EventLoopConcurrencyTest {
                 Arguments.arguments(1, 10),
                 Arguments.arguments(10, 100),
                 Arguments.arguments(100, 1_000));
-    }
-
-    static class DisabledLogger implements Logger {
-        @Override
-        public boolean enabled() {
-            return false;
-        }
-
-        @Override
-        public void log(LogEntry... entries) {
-
-        }
-
-        @Override
-        public void log(Exception e, LogEntry... entries) {
-
-        }
     }
 
 }

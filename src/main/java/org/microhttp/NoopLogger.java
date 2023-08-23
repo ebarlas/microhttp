@@ -1,8 +1,11 @@
 package org.microhttp;
 
-final class NoopLogger implements Logger {
+/**
+ * A logger that is disabled and does not log anything.
+ */
+public final class NoopLogger implements Logger {
 
-    static final NoopLogger INSTANCE = new NoopLogger();
+    private static final NoopLogger INSTANCE = new NoopLogger();
 
     private NoopLogger() {
     }
@@ -21,4 +24,9 @@ final class NoopLogger implements Logger {
     public void log(Exception e, LogEntry... entries) {
 
     }
+
+    public static Logger instance() {
+        return INSTANCE;
+    }
+
 }
