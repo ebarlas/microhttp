@@ -6,7 +6,7 @@ public record Options(String host, int port, boolean reuseAddr, boolean reusePor
                       Duration requestTimeout, int readBufferSize, int acceptLength, int maxRequestSize,
                       int concurrency) {
 
-    static OptionsBuilder builder() {
+    public static OptionsBuilder builder() {
         return OptionsBuilder.newBuilder();
     }
 }
