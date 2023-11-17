@@ -1,6 +1,7 @@
 package org.microhttp;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -25,7 +26,7 @@ public class RequestParserTest {
             List.of(
                     new Header("Host", "127.0.0.1:9000"),
                     new Header("Accept", "*/*")),
-            null);
+            new byte[0]);
 
     static final byte[] GET_BYTES_EMPTY_HEADER_VAL = """
             GET /file HTTP/1.1\r
@@ -43,7 +44,7 @@ public class RequestParserTest {
                     new Header("Host", "127.0.0.1:9000"),
                     new Header("Accept", "*/*"),
                     new Header("Thingy", "")),
-            null);
+            new byte[0]);
 
     static final byte[] POST_BYTES = """
             POST /file HTTP/1.1\r
@@ -142,12 +143,32 @@ public class RequestParserTest {
             \r
             """.getBytes();
 
+    // https://github.com/ebarlas/microhttp/issues/26
+    static final byte[] NO_CONTENT_LENGTH_NO_CHUNKED_TRANSFER_BYTES = """
+            GET / HTTP/1.1\r
+            Host: mccue.dev\r
+            \r
+            """.getBytes();
+
+    static final Request NO_CONTENT_LENGTH_NO_CHUNKED_TRANSFER = new Request(
+            "GET",
+            "/",
+            "HTTP/1.1",
+            List.of(new Header("Host", "mccue.dev")),
+            new byte[0]
+    );
+
     public static Stream<Arguments> requestArgsProvider() {
         return Stream.of(
                 Arguments.arguments(GET_BYTES, GET_REQUEST),
                 Arguments.arguments(GET_BYTES_EMPTY_HEADER_VAL, GET_REQUEST_EMPTY_HEADER_VAL),
                 Arguments.arguments(POST_BYTES, POST_REQUEST),
-                Arguments.arguments(CHUNKED_POST_BYTES, CHUNKED_POST_REQUEST));
+                Arguments.arguments(CHUNKED_POST_BYTES, CHUNKED_POST_REQUEST),
+                Arguments.arguments(
+                        NO_CONTENT_LENGTH_NO_CHUNKED_TRANSFER_BYTES,
+                        NO_CONTENT_LENGTH_NO_CHUNKED_TRANSFER
+                )
+        );
     }
 
     public static Stream<byte[]> invalidRequestArgsProvider() {
