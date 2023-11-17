@@ -36,7 +36,7 @@ public class EventLoop {
     }
 
     public EventLoop(Options options, Handler handler) throws IOException {
-        this(options, new DebugLogger(), handler);
+        this(options, NoopLogger.instance(), handler);
     }
 
     public EventLoop(Options options, Logger logger, Handler handler) throws IOException {
