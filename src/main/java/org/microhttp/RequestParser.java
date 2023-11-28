@@ -13,6 +13,7 @@ class RequestParser {
     private static final String HEADER_CONTENT_LENGTH = "Content-Length";
     private static final String HEADER_TRANSFER_ENCODING = "Transfer-Encoding";
     private static final String CHUNKED = "chunked";
+    private static final byte[] EMPTY_BODY = new byte[]{};
 
     private static final int RADIX_HEX = 16;
 
@@ -94,6 +95,7 @@ class RequestParser {
                 if (hasChunkedEncodingHeader()) {
                     state = State.CHUNK_SIZE;
                 } else {
+                    body = EMPTY_BODY;
                     state = State.DONE;
                 }
             } else {
