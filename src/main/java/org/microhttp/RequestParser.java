@@ -95,6 +95,7 @@ class RequestParser {
                     state = State.CHUNK_SIZE;
                 } else {
                     state = State.DONE;
+                    this.contentLength = 0;
                 }
             } else {
                 this.contentLength = contentLength;
