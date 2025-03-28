@@ -15,11 +15,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Handler;
 
 /**
  * EventLoop is an HTTP server implementation. It provides connection management, network I/O,
  * request parsing, and request dispatching.
  */
+
+
 public class EventLoop {
 
     private final Options options;
@@ -32,14 +35,14 @@ public class EventLoop {
     private final Thread thread;
 
     public EventLoop(Handler handler) throws IOException {
-        this(Options.builder().build(), handler);
+        this(Options.builder().build(), (org.microhttp.Handler) handler);
     }
 
-    public EventLoop(Options options, Handler handler) throws IOException {
-        this(options, NoopLogger.instance(), handler);
+    public EventLoop(Options options, org.microhttp.Handler handler) throws IOException {
+        this(options, NoopLogger.instance(), (org.microhttp.Handler) handler);
     }
 
-    public EventLoop(Options options, Logger logger, Handler handler) throws IOException {
+    public EventLoop(Options options, Logger logger, org.microhttp.Handler handler) throws IOException {
         this.options = options;
         this.logger = logger;
 
@@ -49,7 +52,7 @@ public class EventLoop {
         AtomicLong connectionCounter = new AtomicLong();
         connectionEventLoops = new ArrayList<>();
         for (int i = 0; i < options.concurrency(); i++) {
-            connectionEventLoops.add(new ConnectionEventLoop(options, logger, handler, connectionCounter, stop));
+            connectionEventLoops.add(new ConnectionEventLoop(options, logger, (org.microhttp.Handler) handler, connectionCounter, stop));
         }
 
         thread = new Thread(this::run, "event-loop");

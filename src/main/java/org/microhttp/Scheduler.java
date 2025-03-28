@@ -50,7 +50,8 @@ class Scheduler {
         return result;
     }
 
-    class Task implements Cancellable {
+    class Task
+            implements Cancellable {
         final Runnable task;
         final long time;
         final long id;
