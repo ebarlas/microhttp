@@ -23,7 +23,7 @@ public class DebugLogger implements Logger {
 
     @Override
     public void log(Exception e, LogEntry... entries) {
-        e.printStackTrace();
+        e.getStackTrace();
         log(entries);
     }
 }

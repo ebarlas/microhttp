@@ -37,7 +37,7 @@ public class TestServer {
                 .withReadBufferSize(readBufferSize)
                 .withMaxRequestSize(2_048)
                 .build();
-        eventLoop = new EventLoop(options, logger, h);
+        eventLoop = new EventLoop(options, (Logger) logger, (org.microhttp.Handler) h);
         eventLoop.start();
         port = eventLoop.getPort();
     }

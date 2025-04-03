@@ -26,7 +26,7 @@ public class EventLoopRestartTest {
         EventLoop secondEventLoop = null;
         try {
 
-            eventLoop = new EventLoop(options, logger, handler);
+            eventLoop = new EventLoop(options, (Logger) logger, (org.microhttp.Handler) handler);
             eventLoop.start();
             int port = eventLoop.getPort();
             eventLoop.stop();
@@ -35,7 +35,7 @@ public class EventLoopRestartTest {
             options = OptionsBuilder.newBuilder()
                     .withPort(port)
                     .build();
-            secondEventLoop = new EventLoop(options, logger, handler);
+            secondEventLoop = new EventLoop(options, (Logger) logger, (org.microhttp.Handler) handler);
             secondEventLoop.start();
         } finally {
             if (eventLoop != null) {
@@ -68,7 +68,7 @@ public class EventLoopRestartTest {
         Collection<Closeable> resourcesToClose = new ArrayList<>();
         try {
 
-            eventLoop = new EventLoop(options, logger, handler);
+            eventLoop = new EventLoop(options, (Logger) logger, (org.microhttp.Handler) handler);
             eventLoop.start();
             int port = eventLoop.getPort();
 
@@ -92,7 +92,7 @@ public class EventLoopRestartTest {
             options = OptionsBuilder.newBuilder()
                     .withPort(port)
                     .build();
-            secondEventLoop = new EventLoop(options, logger, handler);
+            secondEventLoop = new EventLoop(options, (Logger) logger, (org.microhttp.Handler) handler);
             secondEventLoop.start();
 
             socket = new Socket("localhost", port);

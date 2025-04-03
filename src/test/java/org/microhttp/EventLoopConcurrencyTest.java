@@ -43,9 +43,10 @@ public class EventLoopConcurrencyTest {
                     "OK",
                     List.of(new Header("Content-Type", req.header("Content-Type"))),
                     req.body());
+
             callback.accept(response);
         });
-        eventLoop = new EventLoop(options, NoopLogger.instance(), handler);
+        eventLoop = new EventLoop(options, NoopLogger.instance(), (org.microhttp.Handler) handler);
         eventLoop.start();
         port = eventLoop.getPort();
     }
